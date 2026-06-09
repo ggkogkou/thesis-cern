@@ -1,0 +1,196 @@
+% ============================================================
+% thesis.sty
+% Clean thesis style file
+% Compile with XeLaTeX
+% ============================================================
+
+\ProvidesPackage{thesis}[2026/05/16 Clean thesis package]
+
+% ------------------------------------------------------------
+% Language and fonts
+% ------------------------------------------------------------
+\RequirePackage{fontspec}
+\RequirePackage{polyglossia}
+
+\RequirePackage{tikz}
+\RequirePackage{amsmath}
+
+\RequirePackage[bottom]{footmisc}
+
+\setmainlanguage{english}
+\setotherlanguage{greek}
+
+% Academic font with good English and Greek support
+\setmainfont{Linux Libertine O}
+\newfontfamily\greekfont[Script=Greek]{Linux Libertine O}
+
+% Cover-only font, used for the title pages
+\newfontfamily\coverfont{EB Garamond}[
+    Ligatures=TeX,
+    SmallCapsFeatures={Letters=SmallCaps}
+]
+
+\newfontfamily\covergreekfont[Script=Greek]{EB Garamond}[
+    Ligatures=TeX,
+    SmallCapsFeatures={Letters=SmallCaps}
+]
+
+% ------------------------------------------------------------
+% Page layout
+% ------------------------------------------------------------
+\RequirePackage{geometry}
+\RequirePackage{placeins}
+
+\geometry{
+    a4paper,
+    top=2.2cm,
+    bottom=2.5cm,
+    left=2.5cm,
+    right=2.5cm,
+    headheight=15pt
+}
+
+% ------------------------------------------------------------
+% Line spacing
+% ------------------------------------------------------------
+\RequirePackage{setspace}
+
+\setstretch{1.25}
+\frenchspacing
+
+% ------------------------------------------------------------
+% Paragraph formatting
+% ------------------------------------------------------------
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.6em}
+
+% ------------------------------------------------------------
+% Figures and captions
+% ------------------------------------------------------------
+\RequirePackage{graphicx}
+\RequirePackage{float}
+\RequirePackage{caption}
+\RequirePackage{subcaption}
+\RequirePackage{wrapfig}
+\RequirePackage{svg}
+
+\graphicspath{{figures/}{Figures/}{images/}{Images/}{logos/}{./}}
+
+\captionsetup{
+    font=small,
+    labelfont=bf,
+    justification=centerlast
+}
+
+% ------------------------------------------------------------
+% Tables
+% ------------------------------------------------------------
+\RequirePackage{booktabs}
+\RequirePackage{longtable}
+\RequirePackage{array}
+\RequirePackage{tabularx}
+\RequirePackage{xltabular}
+\RequirePackage{colortbl}
+\RequirePackage{enumitem}
+
+% ------------------------------------------------------------
+% Math and units
+% ------------------------------------------------------------
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\RequirePackage{siunitx}
+
+% ------------------------------------------------------------
+% Acronyms
+% ------------------------------------------------------------
+\RequirePackage[printonlyused]{acronym}
+
+% ------------------------------------------------------------
+% Colors  (must match thesis_plot_style.py hex values exactly)
+% ------------------------------------------------------------
+\RequirePackage{xcolor}
+
+%  Primary palette  -- used in both plots and document typography
+\definecolor{thesisblue}  {HTML}{1A5376}   % BLUE   -- accent, resolver, links
+\definecolor{thesisred}   {HTML}{C44E52}   % RED    -- encoder, outliers
+\definecolor{thesisgreen} {HTML}{55A868}   % GREEN  -- angle state 3
+\definecolor{thesispurple}{HTML}{8172B2}   % PURPLE -- angle state 4
+\definecolor{thesisgold}  {HTML}{CCB974}   % GOLD   -- state 5 / spare
+\definecolor{thesisteal}  {HTML}{64B5CD}   % TEAL   -- state 6 / spare
+
+%  Background / neutral tones
+\definecolor{thesislightblue}{HTML}{DCEEFA}   % shading bands in figures
+\definecolor{thesislightgray}{HTML}{F5F5F5}   % table row fills
+
+% ------------------------------------------------------------
+% Code listings
+% ------------------------------------------------------------
+\RequirePackage{listings}
+
+\lstset{
+    basicstyle=\footnotesize\ttfamily,
+    numbers=left,
+    numberstyle=\tiny,
+    stepnumber=1,
+    showstringspaces=false,
+    tabsize=4,
+    breaklines=true,
+    breakatwhitespace=false,
+    frame=single,
+    literate={°}{{$^\circ$}}1
+}
+
+% ------------------------------------------------------------
+% Contents depth
+% ------------------------------------------------------------
+\setcounter{tocdepth}{3}
+\setcounter{secnumdepth}{3}
+
+% ------------------------------------------------------------
+% Headers and footers
+% ------------------------------------------------------------
+\RequirePackage{fancyhdr}
+
+\pagestyle{fancy}
+\fancyhf{}
+
+\fancyhead[L]{\nouppercase{\leftmark}}
+\fancyhead[R]{\thepage}
+
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\fancypagestyle{plain}{
+    \fancyhf{}
+    \fancyfoot[C]{\thepage}
+    \renewcommand{\headrulewidth}{0pt}
+}
+
+% ------------------------------------------------------------
+% Hyperlinks
+% Load hyperref near the end
+% ------------------------------------------------------------
+\RequirePackage[bookmarks=true]{hyperref}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=thesisblue,
+    citecolor=thesisblue,
+    urlcolor=thesisblue,
+    anchorcolor=thesisblue,
+    bookmarksopen=true,
+    bookmarksnumbered=true,
+    pdfstartview=FitH,
+    pdftitle={CERN Thesis},
+    pdfauthor={Georgios Gkogkou},
+    pdfkeywords={CERN, radiation effects, radiation qualification}
+}
+
+% ------------------------------------------------------------
+% Better URL breaking
+% ------------------------------------------------------------
+\RequirePackage{xurl}
+
+% ------------------------------------------------------------
+% End of thesis.sty
+% ============================================================

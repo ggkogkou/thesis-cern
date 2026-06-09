@@ -1,0 +1,813 @@
+\chapter{System Design and Implementation for Radiation Environments}
+\label{sec:system-design}
+
+There are several methods that can be followed when designing systems for harsh environments, such as accelerators. While some components are radiation-hardened by design, their use in designs that need to be produced in large quantities poses significant difficulties in terms of cost, availability, and lead times. Thus, at CERN, evaluation techniques have been developed, and are still under development, for assessing the risk of using COTS components in accelerators.
+
+In this chapter, the actual design will be presented. The explanation will begin by summarizing the developed Radiation Hardness Assurance (RHA) procedure that is followed at CERN when designing a system based on COTS components for the accelerator complex. After that, the selection of the components and the radiation tests performed at component level will be showcased. Finally, the firmware implementation on the MCU will be thoroughly explained.
+
+\section{Radiation Hardness Assurance}
+
+Firstly, it is important to mention all the available component options, namely:
+
+\begin{itemize}
+    \item \textbf{Radiation-Hardened (RH):} Electronics that have been developed, packaged, and sold to provide some level of protection against radiation in a \textit{particular environment}.
+    \item \textbf{Radiation-Tolerant (RT):}
+    \item \textbf{Commercial Off-The-Shelf (COTS):} Plastic packaging, industrial or automotive grade; testing is required to evaluate their tolerance to radiation environments.
+\end{itemize}
+
+However, testing every available component on the market is not feasible. Therefore, it is necessary to use as much as possible the available knowledge or documentation of already tested components.
+
+There are a few databases that can be used in order to find components that might suit the specific application. Some examples of available databases are:
+
+\begin{itemize}
+    \item \textbf{CERN R2EWG:} Internal CERN database, maintained and developed by the Radiation to Electronics Working Group.
+    \item \textbf{European Space Agency (ESA):} The ESCIES database.
+    \item IEEE Radiation Effects Data Workshop.
+    \item \textbf{NASA:} RADHOME and NEPP databases.
+\end{itemize}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth,keepaspectratio]{04_DesignForRadiationEnvironment/images/R2EWG_UI.png}
+  \caption{User interface of the CERN R2EWG database}
+  \label{fig:r2ewg-database-ui}
+\end{figure}
+
+There are mainly three approaches that can be followed in order to design a system. More specifically, one can:
+
+\begin{enumerate}
+    \item Select unknown COTS components from the market and perform radiation tests.
+    \item Select previously tested COTS components from databases and re-test them at component level.
+    \item Select and accept COTS components with existing radiation test data.
+\end{enumerate}
+
+In this thesis, a combination of the first and the third approaches is followed. The resources that are used in the scope of this work are \textit{i) the R2EWG database} and \textit{ii) radiation-tolerant developments of CERN, such as DI/OT}. The already tested components of the internal database usually have sufficient data from tests performed in radiation beams or environments representative of the CERN accelerator complex. Of course, as will be showcased later, a position encoder had to be selected and tested separately, as there was no such component available in the databases.
+
+\section{Radiation Testing of Commercial Integrated Solution}
+
+A system based on DRV8316 and the SAMD21 MCU was evaluated. The system showcased extremely fast degradation and failure and power cycling of the device did not recover it.
+
+\section{Circuits Design Based On Component Availability}
+
+The final system design is highly dictated by the availability of the components. For example, in the design of a commercial product, where the integrated solutions for current sensing are endless, the main concern would be the cost itself. However, in the case of a radiation-tolerant design, the circuit implementation, even at the highest level, such as high-side, inline, or low-side sensing, depends almost exclusively on the components that exist in the database.
+
+\subsection{Control Unit Selection}
+A digital controller is the core of every modern motor control application and it is, actually, the factor that affects the control mostly. It is responsible for interfacing with the various analog circuits and analog/digital sensors, the operator, and of course perform all the control algorithms. Therefore, it is of great importance to select a controller that will be as robust as possible to long-term degradation (TID, DD), and to stochastic soft/hard SEE (SEL, SEU, SEFI).
+
+Options for controllers include: microcontrollers (MCU), microprocessors (MPU), FPGA, and Digital Signal Controllers (DSC). The focus will be given to MCU and FPGA devices that have already been tested and integrated in other system designs.
+
+In the context of the effects of radiation to electronics, the FPGA appears to be the best choice for integration in radiation tolerant design, as it provides:
+
+\begin{enumerate}
+    \item \textbf{Flexibility:} The ability to develop highly customized and complex tasks directly on hardware level unlocks the most of the possibilities for high-performance control. Furthermore, hardware-level radiation-induced fault mitigation techniques can be designed, such as TMR, enabling prospect for the maximum safety
+    \item \textbf{Scalability:} Available in various sizes and configurations and thus, enabling the possibility to further develop a product without the need to completely migrate to different platforms
+    \item \textbf{Processing Power:} The processing power is very high compared to its counter-parts and it can be tailored to specific applications for maximum performance; ability to drive more than one motors at the same time
+\end{enumerate}
+
+On the other hand, an MCU is sacrificing all of the above in exchange for easiness of initial development and integration. The integrated peripherals such as ADC, TCC, USART, SPI, TC, give enough flexibility for designing a first prototype system. Of course, the impossibility of applying mitigation techniques on hardware level, makes it necessary to implement as much as possible in software and with external hardware, like an external watchdog timer.
+
+So, for the needs of this work, and for enhancing the development speed, the selection of the SAMD21G18A MCU was a straightforward choice.
+
+\subsection{Three-Phase Inverter}
+\label{subsec:three_phase_inverter}
+
+A three-phase inverter is typically implemented using six power switching devices arranged as three half-bridges. Depending on the voltage, current, switching-frequency, efficiency, and robustness requirements, the switching devices can be implemented using BJTs, MOSFETs, IGBTs, or more recent wide-bandgap technologies such as GaN or SiC transistors.
+
+For this work, silicon MOSFETs were selected as the power switching devices. Compared with BJTs, MOSFETs are voltage-driven devices and can be controlled by charging and discharging the gate capacitance, instead of requiring a continuous base current. This simplifies the drive circuitry and makes MOSFETs suitable for low- and medium-voltage motor-control applications. MOSFETs are also widely used in industry and at CERN, and several candidate devices were available in the R2EWG database of radiation-tested components.
+
+Wide-bandgap devices, such as GaN and SiC transistors, were also considered during the design phase. These technologies offer attractive switching performance and may be suitable for future versions of the design. However, their use would require a dedicated evaluation of the gate-drive topology, protection circuitry, layout constraints, and radiation qualification. Therefore, the present work focuses on silicon MOSFETs with available radiation-test documentation.
+
+Before selecting the final MOSFET, the main radiation effects relevant to power MOSFETs were considered.
+
+\paragraph{Threshold-voltage shift}
+
+One of the most important total ionizing dose (TID) effects in MOSFETs is the shift of the gate-source threshold voltage, $V_{GS(th)}$. Radiation-induced charge trapping in the oxide and at the oxide-semiconductor interface can modify the voltage required to form the conduction channel. In a power inverter, this effect is critical because it changes the gate-voltage margin between the off-state and the onset of conduction. A negative threshold-voltage shift can reduce the immunity to noise and increase the risk of unwanted turn-on, especially in half-bridge configurations where high $dV/dt$ transients are present.
+
+\paragraph{Drain-source leakage current}
+
+Radiation can also increase the off-state drain-source leakage current, $I_{DSS}$. This effect is relevant because it can increase static power dissipation and reduce the blocking capability of the device in the off-state. For this reason, leakage-current degradation was considered together with the voltage rating, the derating margin, and the expected operating conditions.
+
+\paragraph{Single-event effects}
+
+Power MOSFETs may also be affected by single-event effects, including single-event gate rupture and single-event burnout. These effects depend on the particle environment, the applied drain-source voltage, the gate bias, and the device technology. In this design, the risk of destructive single-event effects was reduced by applying voltage derating, so that the MOSFETs operate well below their rated drain-source breakdown voltage.
+
+\subsubsection{Power MOSFET Screening}
+
+The MOSFET candidates were selected from the R2EWG database and evaluated using the available CERN radiation-test documentation. In particular, the NMOS selection was based on the CC60 radiation-test report EDMS~2416559, which investigated the TID-induced threshold-voltage drift of several N-channel MOSFETs intended for switching-mode power-conversion applications~\cite{CERN_EDMS_2416559}. The test campaign focused on the evolution of the threshold voltage and the $I_D=f(V_{GS})$ characteristic with respect to the accumulated TID.
+
+The initial screening criteria are summarized in Table~\ref{tab:mosfet_screening_criteria}.
+
+\begin{table}[htbp]
+\centering
+\caption{Initial screening criteria for the power MOSFET selection.}
+\label{tab:mosfet_screening_criteria}
+\begin{tabular}{p{0.35\linewidth} p{0.55\linewidth}}
+\hline
+\textbf{Criterion} & \textbf{Design relevance} \\
+\hline
+Availability and lifecycle status & Components marked as obsolete or end-of-life were excluded, even if they were still available in stock. \\
+Drain-source voltage rating, $V_{DSS}$ & A sufficiently high breakdown voltage is required to provide voltage margin and allow derating. \\
+Current capability & The device must support the required phase current with adequate margin. \\
+Gate-source voltage rating, $V_{GSS}$ & The gate-drive voltage must remain safely within the maximum allowed gate-source voltage. \\
+On-state resistance, $R_{DS(on)}$ & A low $R_{DS(on)}$ reduces conduction losses and thermal stress. \\
+Gate charge, $Q_g$ & A low gate charge reduces the required gate-drive strength and switching losses. \\
+Package and thermal capability & The package must be suitable for the expected power dissipation and PCB implementation. \\
+Radiation-test information & Preference was given to components with radiation-test results under conditions relevant to the application, including biased or switching operation. \\
+\hline
+\end{tabular}
+\end{table}
+
+Both NMOS and PMOS devices were initially considered, since both types were available in the R2EWG database. The candidate devices are listed in Table~\ref{tab:mosfet_candidates}. The PMOS candidates were reviewed during the initial screening stage; however, since the final inverter was implemented using NMOS devices, the detailed PMOS radiation-sensitivity data are reported in Appendix~\ref{app:pmos_radiation_data}.
+
+\begin{table}[htbp]
+\centering
+\caption{Power MOSFET candidates considered during the selection process.}
+\label{tab:mosfet_candidates}
+\begin{tabular}{l l}
+\hline
+\textbf{Device type} & \textbf{Candidate devices} \\
+\hline
+NMOS & IPD600N25N3GATMA1 \\
+     & IPD320N20N3GATMA1 \\
+     & IPB320N20N3GATMA1 \\
+\hline
+PMOS & SUD50P10-43L-GE3 \\
+     & RSJ250P10FRA \\
+     & RD3P130SP \\
+\hline
+\end{tabular}
+\end{table}
+
+An NMOS implementation was selected for both the high-side and low-side switches. NMOS devices typically offer lower on-state resistance, higher current capability, and better switching performance than comparable PMOS devices. In addition, suitable gate-driving solutions were available, allowing the high-side NMOS devices to be driven correctly.
+
+The main drawback of using NMOS devices on the high side is that the gate voltage must be driven above the phase-node voltage in order to fully enhance the device. This requirement was addressed in the gate-drive design.
+
+\subsubsection{NMOS Candidate Specifications}
+
+The NMOS devices considered in the CERN CC60 test campaign are summarized in Table~\ref{tab:nmos_candidate_specs}. The IPB320N20N3GATMA1 and IPD320N20N3GATMA1 have very similar electrical characteristics, with the main difference being their package. Both devices have a 200~V drain-source voltage rating, a maximum $R_{DS(on)}$ of 32~m$\Omega$ at $V_{GS}=10$~V and $I_D=34$~A, and a threshold-voltage range of 2--4~V.
+
+\begin{table}[htbp]
+\centering
+\caption{Relevant electrical specifications of the NMOS candidates.}
+\label{tab:nmos_candidate_specs}
+\begin{tabular}{l c c c c}
+\hline
+\textbf{Device} & \textbf{Package} & \textbf{$V_{DSS}$ [V]} & \textbf{$R_{DS(on)}$ max [$\Omega$]} & \textbf{$V_{GS(th)}$ [V]} \\
+\hline
+SUM90220E-GE3 & TO-263 & 200 & 0.0235 & 2--4 \\
+SQM10250E & TO-263 & 250 & 0.0320 & 2.5--3.5 \\
+IPB320N20N3GATMA1 & TO-263 & 200 & 0.0320 & 2--4 \\
+IPD320N20N3GATMA1 & TO-252-3 & 200 & 0.0320 & 2--4 \\
+SUD90330E-GE3 & TO-252AA & 200 & 0.0422 & 2--4 \\
+IPD600N25N3GATMA1 & PG-TO252-3 & 250 & 0.0600 & 2--4 \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{NMOS Radiation-Test Methodology}
+
+The objective of the NMOS radiation-test campaign was to evaluate the evolution of the MOSFET transfer characteristic under total ionizing dose, with particular attention to threshold-voltage shift. The tested devices were intended for switching-mode power-conversion applications, and therefore several biasing conditions were considered.
+
+During characterization, a gate-source voltage ramp from 0~V to 10~V was applied to the MOSFET under test while the other devices were kept off. The drain-source voltage was set to 20~V during the $I_D=f(V_{GS})$ measurement. The threshold voltage was then extracted from the measured transfer characteristic~\cite{CERN_EDMS_2416559}.
+
+The biasing conditions used during irradiation are summarized in Table~\ref{tab:nmos_test_setup}.
+
+\begin{table}[htbp]
+\centering
+\caption{Biasing conditions used during the NMOS radiation-test campaign.}
+\label{tab:nmos_test_setup}
+\begin{tabular}{l c c c c}
+\hline
+\textbf{Samples} & \textbf{$V_G$} & \textbf{$V_D$} & \textbf{$V_S$} & \textbf{$I_D$} \\
+\hline
+DUT1 and DUT2 & 0~V & 200~V & Ground & 0~mA \\
+DUT3 and DUT4 & 10~V & 200~V & Ground & 1~mA \\
+DUT5 & 0--10~V pulse, 200~kHz & 200~V & Ground & 1~mA \\
+\hline
+\end{tabular}
+\end{table}
+
+The irradiation was performed at CERN's CC60 facility using a $^{60}$Co source. The devices were irradiated at dose rates between 9.44~Gy/h and 11.22~Gy/h, depending on the session. The irradiation conditions are shown in Table~\ref{tab:nmos_irradiation_conditions}.
+
+\begin{table}[htbp]
+\centering
+\caption{Irradiation conditions for the NMOS candidates.}
+\label{tab:nmos_irradiation_conditions}
+\begin{tabular}{c l c c c}
+\hline
+\textbf{Session} & \textbf{DUT} & \textbf{Samples} & \textbf{Dose rate [Gy/h]} & \textbf{TID [Gy]} \\
+\hline
+1 & SUM90220E-GE3 & 5 & 9.44 & 592.20 \\
+2 & SQM10250E & 5 & 11.01 & 506.40 \\
+3 & IPB320N20N3GATMA1 & 5 & 11.22 & 502.66 \\
+4 & IPD320N20N3GATMA1 & 5 & 11.01 & 502.18 \\
+5 & SUD90330E-GE3 & 5 & 11.01 & 500.17 \\
+6 & IPD600N25N3GATMA1 & 5 & 9.44 & 544.75 \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{NMOS Candidate Evaluation}
+
+The CC60 radiation-test results showed that the candidate devices did not behave identically under irradiation. According to the report conclusions, the IPD/IPB family, consisting of IPB320N20N3GATMA1, IPD320N20N3GATMA1, and IPD600N25N3GATMA1, withstood the highest dose before going out of manufacturer specification and represented the best compromise between sensitivity and initial threshold voltage~\cite{CERN_EDMS_2416559}.
+
+The main observations from the evaluated NMOS candidates are summarized in Table~\ref{tab:nmos_candidate_evaluation}.
+
+\begin{table}[htbp]
+\centering
+\caption{Summary of the NMOS candidate evaluation.}
+\label{tab:nmos_candidate_evaluation}
+\begin{tabular}{p{0.30\linewidth} p{0.44\linewidth} p{0.18\linewidth}}
+\hline
+\textbf{Candidate} & \textbf{Observation} & \textbf{Decision} \\
+\hline
+IPD600N25N3GATMA1 & One DUT failed during irradiation. The remaining samples showed threshold-voltage drift, with the 10~V biased samples going out of specification below 155~Gy. & Not selected \\
+IPD320N20N3GATMA1 & Showed similar electrical characteristics to IPB320N20N3GATMA1. The 10~V biased samples went out of specification at approximately 165~Gy on average, and the pulsed sample at approximately 282~Gy. & Considered \\
+IPB320N20N3GATMA1 & Showed the most suitable behaviour for this application among the evaluated candidates. The 0~V biased samples remained within specification up to 502.66~Gy, while the pulsed sample went out of specification at 313~Gy. & Selected \\
+\hline
+\end{tabular}
+\end{table}
+
+For the selected IPB320N20N3GATMA1, the main observed degradation mechanism was a shift of the threshold voltage towards lower values. This behaviour is important for the gate-drive design because a lower threshold voltage reduces the margin between the off-state gate voltage and the onset of conduction. The detailed behaviour of the IPB320N20N3GATMA1 samples is summarized in Table~\ref{tab:ipb320_radiation_summary}.
+
+\begin{table}[htbp]
+\centering
+\caption{Voltage-threshold degradation of the IPB320N20N3GATMA1 during irradiation.}
+\label{tab:ipb320_radiation_summary}
+\begin{tabular}{l c c c c}
+\hline
+\textbf{Sample} & \textbf{Bias} & \textbf{$V_{th}$ before [V]} & \textbf{$V_{th}$ at 502.66 Gy [V]} & \textbf{Out of spec. after [Gy]} \\
+\hline
+DUT1 & 0~V & 3.45 & 2.01 & No \\
+DUT2 & 0~V & 3.45 & 2.01 & No \\
+DUT3 & 10~V & 3.55 & -0.40 & 182.23 \\
+DUT4 & 10~V & 3.55 & -0.02 & 182.52 \\
+DUT5 & Pulse 0--10~V & 3.56 & 1.32 & 313.00 \\
+\hline
+\end{tabular}
+\end{table}
+
+The results show that the bias condition strongly influenced the threshold-voltage drift. The samples biased at $V_{GS}=0$~V remained within the manufacturer threshold-voltage specification up to the final accumulated dose of 502.66~Gy. The samples biased at $V_{GS}=10$~V degraded faster and crossed the lower threshold-voltage specification at approximately 182~Gy. The sample biased with a 0--10~V pulsed gate signal showed intermediate behaviour and went out of specification at 313~Gy.
+
+Based on this screening, the IPB320N20N3GATMA1 was selected as the power MOSFET for the three-phase inverter. The selection was therefore not based only on nominal datasheet parameters, but also on the available CERN radiation-test evidence and on the observed degradation mechanisms under irradiation. The negative threshold-voltage shift was taken into account in the design by ensuring a well-defined low-impedance off-state and sufficient gate-voltage margin in the gate-drive circuit.
+
+\subsection{Gate Drivers}
+
+There are a lot of options for driving the gates of the MOSFETs in literature. For example, in integrated motor drivers the concept of voltage doubler charge pumps is used. However, the components that exist in the databases are limited to only a few options that can be analyzed even separately.
+
+\begin{itemize}
+    \item \textbf{ZXGD3003E6, ZXGD3005E6:} They are essentially an integrated BJT push-pull topology that is suitable for driving low-side NMOS and high-side PMOS without much external components. On the other hand, it makes driving high-side NMOS a more competitive task as a discrete bootstrap topology would have to be designed
+    \item \textbf{ADP3654, MIC4452:} Those are both CMOS push-pull topologies with internal protection mechanisms for avoiding cross-shooting of low and high side internal MOSFETs. This topology is only suitable as a low-side NMOS gate driver and this also how their datasheets define them
+    \item \textbf{IRS21867, L6498D, NCP5183:} Those three are integrated boostrap gate drivers and of course by design they can drive both low and high side at the same time using the floating voltage technique where the gate voltage of the high side is referenced to the voltage of the output node of the half-bridge
+\end{itemize}
+
+All the aforementioned solutions have performed well under radiation according to the past test reports, so the selection is more of a design choice. Of course, as it makes the most sense, an integrated bootstrap topology is the easiest component to integrate. The L6498D and later the NCP5183 are utilized.
+
+\subsection{Current Sensors}
+
+Several circuit techniques can be used to measure current. The most widely used methods are shunt-resistor sensing and Hall-effect sensing. Shunt-resistor sensing is commonly used because it is simple, low-cost, and can provide accurate measurements when the resistor and the analog front-end are properly selected. Hall-effect sensors, on the other hand, are often preferred when galvanic isolation is required or when the measurement should introduce minimal series voltage drop in the current path.
+
+In this thesis, the shunt-resistor method was selected because it can be implemented using discrete components and because suitable radiation-tested components were available for this type of circuit. The first design choice in a shunt-based current-sensing circuit is the position of the shunt resistor in the current path. Three main options are commonly used: high-side sensing, inline phase-current sensing, and low-side sensing. Each topology has different implications for measurement accuracy, common-mode voltage requirements, firmware synchronization, and fault-detection capability.
+
+The operating principle of shunt-based current sensing is based on measuring the voltage drop across a known resistor. The load current can then be calculated using Ohm's law:
+
+\begin{equation}
+    I_{\mathrm{LOAD}} = \frac{\Delta V_{\mathrm{SHUNT}}}{R_{\mathrm{SHUNT}}}
+\end{equation}
+
+where $\Delta V_{\mathrm{SHUNT}}$ is the voltage drop across the shunt resistor and $R_{\mathrm{SHUNT}}$ is the shunt resistance.
+
+The value of the shunt resistor must be selected as a trade-off between measurement resolution and power dissipation. A larger resistance produces a larger voltage drop, which improves the signal-to-noise ratio and simplifies the analog measurement. However, it also increases conduction losses and heating. Therefore, the shunt resistor must have a suitable resistance value, tolerance, temperature coefficient, and power rating.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth,keepaspectratio]{04_DesignForRadiationEnvironment/images/CSA_ADC_Interface.pdf}
+  \caption{Generic interface between a shunt-based current monitor and an MCU ADC.}
+  \label{fig:csa-adc-interface}
+\end{figure}
+
+Since the voltage drop across the shunt resistor is typically small, it must be amplified before it can be sampled by the ADC of the microcontroller. A generic current-sensing interface is shown in Figure~\ref{fig:csa-adc-interface}. For a unidirectional measurement, the amplifier output voltage can be expressed as:
+
+\begin{equation}
+    V_{\mathrm{OUT}} = G \cdot \Delta V_{\mathrm{SHUNT}}
+\end{equation}
+
+where $G$ is the gain of the amplifier. By combining this expression with Ohm's law, the ADC voltage can also be written as:
+
+\begin{equation}
+    V_{\mathrm{OUT}} = G \cdot R_{\mathrm{SHUNT}} \cdot I_{\mathrm{LOAD}}
+\end{equation}
+
+The microcontroller can then reconstruct the measured current from the ADC voltage as:
+
+\begin{equation}
+    I_{\mathrm{LOAD}} = \frac{V_{\mathrm{OUT}}}{G \cdot R_{\mathrm{SHUNT}}}
+\end{equation}
+
+If bidirectional current sensing is required, an offset voltage is usually added so that both positive and negative currents can be represented within the ADC input range:
+
+\begin{equation}
+    V_{\mathrm{OUT}} = V_{\mathrm{REF}} + G \cdot R_{\mathrm{SHUNT}} \cdot I_{\mathrm{LOAD}}
+\end{equation}
+
+where $V_{\mathrm{REF}}$ is typically chosen close to the middle of the ADC input range.
+
+\subsubsection{Amplifiers for Current Sensing}
+\label{subsubsec:op-amps-theory}
+
+After selecting the shunt-resistor method, the next design choice is the analog front-end used to amplify the voltage drop across the shunt resistor. Since this voltage is typically small, the amplifier must provide sufficient gain while rejecting the common-mode voltage present at the shunt terminals. The most relevant amplifier options are difference amplifiers, instrumentation amplifiers, and dedicated current-shunt amplifiers.
+
+\textbf{Option \#1: The Difference Amplifier} \\
+A difference amplifier can be implemented either as a discrete circuit using a precision operational amplifier and external resistors, or as an integrated circuit with embedded matched resistors. The basic operating principle is shown in Figure~\ref{fig:diff-amp-diagram}. Ideally, the output voltage is proportional only to the differential voltage across the shunt resistor.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth,keepaspectratio]{04_DesignForRadiationEnvironment/images/Difference_Amplifier.pdf}
+  \caption{Difference amplifier based on a precision operational amplifier.}
+  \label{fig:diff-amp-diagram}
+\end{figure}
+
+The main advantage of an integrated difference amplifier is the matching of the internal resistors. The common-mode rejection ratio depends strongly on the resistor ratios, and therefore integrated or laser-trimmed resistor networks usually provide better accuracy than a fully discrete implementation. In a discrete difference amplifier, resistor tolerances, mismatch, temperature drift, and PCB parasitics can degrade the measurement accuracy. This limitation can be reduced by using precision matched-resistor networks, but the layout and component tolerances still remain important design constraints.
+
+\textbf{Option \#2: The Instrumentation Amplifier} \\
+An instrumentation amplifier is another possible solution for amplifying the shunt voltage. It is typically implemented using three operational amplifiers: two input buffers followed by a difference amplifier. This topology provides very high input impedance and allows the gain to be set accurately, often with a single external resistor.
+
+Instrumentation amplifiers are very suitable for precise low-level measurements, such as sensor interfaces for RTDs, thermistors, strain gauges, or other analog sensors. However, their input common-mode voltage range is usually limited by the amplifier supply voltage. As a result, they are less suitable for high-side or inline current sensing in a motor inverter, where the shunt terminals can experience common-mode voltages close to the DC bus voltage and fast switching transients. Some instrumentation-amplifier candidates were available in the R2EWG database, but their common-mode input capability was not sufficient for the high-side or inline sensing options considered in this design.
+
+\textbf{Option \#3: The Current Shunt Amplifier (CSA)} \\
+A dedicated current-shunt amplifier is often the most convenient solution for current-sensing applications, provided that a suitable radiation-tested component is available. These devices are specifically designed to measure small differential voltages in the presence of a larger common-mode voltage. Depending on the device, they may support high-side sensing, bidirectional current measurement, high common-mode rejection, and improved rejection of switching transients.
+
+The main advantages of a dedicated current-shunt amplifier are:
+
+\begin{itemize}
+    \item high common-mode input-voltage capability, depending on the selected device;
+    \item high input impedance;
+    \item high common-mode rejection ratio due to integrated and matched internal components;
+    \item improved rejection of common-mode switching transients;
+    \item simple integration with an ADC or microcontroller.
+\end{itemize}
+
+The main disadvantage is that this functionality is usually provided by a specialized integrated circuit. Therefore, the choice is limited by the availability of suitable radiation-tested devices. In this work, the lack of an appropriate high-common-mode current-shunt amplifier in the available component database was one of the reasons why high-side and inline current sensing were not selected.
+
+\subsubsection{Current Sensing Topologies}
+\label{subsubsec:current-sense-topologies}
+
+The high-side method has the advantages that cannot cause or be affected by ground disturbances as the shunt resistor is at the supply side. That makes a lot of sense when compared to the low-side method. Furthermore, it can detect short-circuits inside the load as the current from the supply will pass through that resistor. The big disadvantage and what makes its selection not feasible is the strict requirement for an op-amp that can tolerate very high common-mode voltages at its inputs up to the bus voltage and slightly more. There was not even a single op-amp that could support this, thus this method was initially rejected.
+
+The inline method is perhaps the best method and easiest to be integrated to the algorithm. It measures the phase current with the highest accuracy and it does not require extra synchronization in firmware to sample the current when at least one high-side and one low-side MOSFETs are turned on. Furthermore, it allows for bidirectional current sensing and is not affected by ground bounce. On the other hand, it has even stricter requirements in hardware than the high-side method. With inline current sensing the amplifier must be able to:
+
+\begin{enumerate}
+    \item Reject the common-mode voltage caused by the switching transients
+    \item Tolerate common-mode voltage equal or greater than the bus voltage
+\end{enumerate}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth,keepaspectratio]{04_DesignForRadiationEnvironment/images/Current_Sense_Combined.pdf}
+  \caption{High-side and inline current sensing topologies}
+  \label{fig:current-sense-high-side-inline}
+\end{figure}
+
+Concluding, and before mentioning the last option, the high-side and inline current monitoring techniques require hardware features that are typically very hard to find in precision op-amps or difference amplifiers ICs. In the databases no such component existed.
+
+Finally, the last option is the low-side current sensing. It is by far the easiest to implement in hardware as the input pins are at a potential very close to zero and it can be made by any discrete op-amp that its pins include 0 V and below as common-mode voltage. Thus it is the most cost-effective. On the other hand it is expected to theoretically have the worst performance. It inserts a low valued resistor in between the circuit and the ground and that creates a small offset between the real 0 V reference and the circuits' ground and it can be affected by ground artifacts or bounce. Moreover, the circuit cannot detect system or load short-circuits as the current leak would not pass through this resistor. And finally it is the most challenging to synchronize in firmware as it requires both high-side and low-side switching elements to create a path and the current to be stabilized.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth,keepaspectratio]{04_DesignForRadiationEnvironment/images/Current_Sense_LowSide.pdf}
+  \caption{Low-side current sensing topology in 3-phase motor control applications}
+  \label{fig:current-sense-low-side}
+\end{figure}
+
+\subsubsection{Selection of Current Sensing Topology}
+
+The final current-sensing topology was selected by considering the measurement requirements, the constraints imposed by the motor-drive topology, and the availability of radiation-tested components. Since no suitable high-common-mode current-sense amplifier was initially available, the first implementation used a low-side shunt resistor with a discrete difference amplifier.
+
+For the first iteration, the AD8030 precision operational amplifier was selected from the R2EWG database. The device had been tested up to 750~Gy and showed little degradation in its output behaviour. Some single-event transients were observed, but their duration was short compared with the time scale of the motor-control loop. Therefore, they were not expected to significantly affect the current measurement after appropriate sampling or filtering.
+
+For a later design iteration, the discrete difference amplifier based on the AD8030 was replaced by a dedicated current-shunt amplifier, the INA214. This component had already been used in another radiation-tolerant CERN design, the DIOT, providing useful design heritage. In the same iteration, the voltage offset generation was improved by replacing the resistor-divider approach with an ISL2109 voltage-reference IC. The evolution of the current-sensing implementation is summarized in Table~\ref{tab:current_sense_iterations}.
+
+Table~\ref{tab:current_sense_iterations} summarizes the two current-sensing implementations.
+\begin{table}[H]
+\centering
+\caption{Evolution of the current-sensing implementation}
+\label{tab:current_sense_iterations}
+\begin{tabular}{c p{0.18\linewidth} p{0.26\linewidth} p{0.26\linewidth}}
+\hline
+\textbf{Iteration} & \textbf{Device} & \textbf{Implementation} & \textbf{Motivation} \\
+\hline
+1 & AD8030 & Discrete difference amplifier with voltage-divider offset & Radiation-tested discrete implementation \\
+2 & INA214 + ISL2109 & Current-shunt amplifier with dedicated voltage reference & Improved integration and DIOT design heritage \\
+\hline
+\end{tabular}
+\end{table}
+
+
+\subsection{Position Sensor}
+
+Since the design has to include a position sensor, in this case the design is not dictated by the component availability as there is no component like this in the databases. For that reason, the method of selecting a component without any previous data and testing it at component-level has to be used.
+
+There are plenty of commercial position sensors in the market. The first decision is to select the type of encoder that we want; among options like magnetic, optical, capacitive, inductive, and rotary resolvers. Of course, each of the above technologies come with its own pros and cons. Furthermore, the encoders are further categorized depending on whether they are incremental or absolute.
+
+Thus, a magnetic encoder is utilized. The main reason are the convenience of both electrical and mechanical integration and the simplicity of the communication with the MCU. In an other case, there are MCUs that support quadratic decoder peripherals that perform the decoding in hardware. In that case, an alternative position encoder could be integrated.
+
+The selection of the AS5047P encoder was final as the results of the radiation test were decent. The test results are presented in the following section \ref{sec:encoder-rad-test}.
+
+\subsection{Miscellaneous: Power Stage \& Voltage References}
+
+In this category the components are not vital for the motor control per se but would be essential in a complete prototype. A proper voltage reference is very important to provide an accurate offset to the current sensing circuit and to the ADC peripheral of the MCU. Furthermore, for the power stage LDOs are utilized to step down the voltages.
+
+For a complete system would also need to include all the protection circuits like: i) Reverse polarity (P-FET or diode), ii) Overcurrent (fuse or PTC), iii) Overvoltage (TVS diode), iv) ESD protection on external I/O. But those would be part of a next third iteration after the validation of the base system.
+
+
+\section{Radiation Testing of a Magnetic Encoder}
+\label{sec:encoder-rad-test}
+
+The test took place at the PSI PIF facility. The objective of the test was to evaluate the behavior of the magnetic encoder under proton beam irradiation.
+
+\subsection{Test Procedures \& Setup}
+
+The first step before performing the test was to define the setup and the test procedures. The device was tested using its SPI interface and without the internal LDO, with the Dynamic Angle Error Compensation (DAEC) feature enabled, and the setup consisted of the an AS5047P evaluation board, a Feather-M0+ breakout board by Adafruit, and a magnet holder.
+
+For the scope of this test, no motor was needed as it would add the extra complexity of driving electronics and would need another independent reference to compare the values. The idea in which the tested was based on was to keep the magnet mounted at the same position throughout the test. This is the most deterministic way of evaluation as the rotation is always 0 degrees and essentially the \textbf{repeatability} is under evaluation.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth,keepaspectratio]{04_DesignForRadiationEnvironment/images/AS5047P_PSI_Setup.drawio.pdf}
+  \caption{Setup for PSI radiation testing campaign}
+  \label{fig:as5047p-psi-setup}
+\end{figure}
+
+As shown in the figure above, the MCU and AS5047P are kept inside the irradiation room and while the DUT is inside the beam, the Feather-M0+ board is kept approximately 1.5m away from it so that it is not affected by the radiation. From the irradiation room, there are two cables, one coaxial BNC for the powering of the devices (power and return) and one USB for reading the serial port from the MCU. The software that was used for this test was the open-source SimpleFOC library which implements a basic driver for the AS5047P device.
+
+\subsection{Irradiation Runs \& Dosimetry}
+
+According to the irradiation procedures, each irradiation run was for 100Gy, and after that the beam was closed, the DUT power cycled, and then the beam was again turned on. One exception is the case of SEL occurrence, where the same procedure happens. Furthermore, even though several units exist to represent displacement damage, in this test, the Displacement Damage Equivalent Fluence (DDEF) is used, which corresponds to the amount of 1 MeV neutron fluence necessary to induce an equivalent to the fluence of the considered particle in the component.
+
+The DUTs were irradiated up to 1 kGy of TID and $1.70\cdot10^{12}$ $1$-$MeV Neq\cdot cm^{-2}$ DDEF, with beam proton fluence being $1.73\cdot10^{12}$ $p\cdot cm^{-2}$.
+
+\subsection{Experimental Results}
+
+The device was irradiated up to a total dose of 1 kGy. The current consumption of the device remained close to nominal and did not showcase an increasing trend, and remained around an average of 6 mA.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth,keepaspectratio]{04_DesignForRadiationEnvironment/images/Current_AS5047P_3V3_over_TID.png}
+  \caption{AS5047P current consumption throughout irradiation test}
+  \label{fig:as5047p-psi-current}
+\end{figure}
+
+On the other hand, as can be noted in the figure above, the device experienced an SEL event after receiving a total particle fluence of $1.0953\cdot 10^{12}$ $\frac{p}{cm^2}$ as indicated bu the Power Supply Unit (PSU) hitting the limit of 200 mA. Following the event, the DUT was power cycled and it fully recovered its functionality.
+
+Regarding the performance of the device, it experienced periods where the measurements were very noisy. During the first and second irradiation cycles, the readings were very unstable. This instability was resolved with the power cycles, and its origins are yet unknown. This behavior is depicted in the following figure:
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth,keepaspectratio]{04_DesignForRadiationEnvironment/images/Angle_AS5047P_over_TID.png}
+  \caption{AS5047P angle readings throughout the irradiation test}
+  \label{fig:as5047p-psi-angles}
+\end{figure}
+
+In an attempt to somehow describe the repeatability and create some metrics to compare the results between pre-irradiation, post-irradiation and during irradiation, the Mean value [deg], standard deviation [deg], minimum [deg] and maximum [deg] are calculated for each run separately. Moreover, in order to not bias the data with the $0^\circ$ readings during the latch-up event, those samples are removed from the analysis. The results are presented in the following table
+
+\begin{table}[H]
+    \centering
+    \arrayrulecolor{thesisblue}
+    \renewcommand{\arraystretch}{1.25}
+    \setlength{\tabcolsep}{9pt}
+
+    \begin{tabular}{>{\bfseries}c
+                    S[table-format=3.2]
+                    S[table-format=2.2]
+                    S[table-format=3.2]
+                    S[table-format=3.2]}
+        \rowcolor{thesisblue}
+        \textcolor{white}{\textbf{Run}} &
+        {\textcolor{white}{\textbf{Mean [deg]}}} &
+        {\textcolor{white}{\textbf{Std. [deg]}}} &
+        {\textcolor{white}{\textbf{Min [deg]}}} &
+        {\textcolor{white}{\textbf{Max [deg]}}} \\
+        \hline
+
+        \rowcolor{thesislightgray}
+        43 & 255.61 & 13.39 & 229.28 & 307.09 \\
+        44 & 239.66 & 53.36 & 15.84  & 353.50 \\
+
+        \rowcolor{thesislightgray}
+        45 & 253.88 & 0.03  & 253.78 & 253.96 \\
+        46 & 253.87 & 0.03  & 253.78 & 253.96 \\
+
+        \rowcolor{thesislightgray}
+        47 & 253.77 & 0.59  & 251.67 & 255.92 \\
+        48 & 253.88 & 0.46  & 253.76 & 267.91 \\
+
+        \rowcolor{thesislightgray}
+        49 & 253.86 & 0.03  & 253.76 & 253.96 \\
+        50 & 253.86 & 0.03  & 253.76 & 253.96 \\
+
+        \hline
+
+        \rowcolor{thesislightgray}
+        Overall (43--50) & 252.59 & 18.10 & 15.84  & 353.50 \\
+        Post-irradiation & 253.85 & 0.03  & 253.78 & 253.94 \\
+
+        \rowcolor{thesislightgray}
+        Pre-irradiation  & 253.89 & 0.04  & 253.81 & 253.96 \\
+
+        \hline
+    \end{tabular}
+
+    \caption{Angular statistics per run.}
+    \label{tab:angular-statistics-per-run}
+    \arrayrulecolor{black}
+\end{table}
+
+Considering the pre-irradiation (under ambient conditions) data as the "correct" reference, the results for each run in comparison to the pre-irradiation are showcased in the following table
+
+\begin{table}[H]
+    \centering
+    \arrayrulecolor{thesisblue}
+    \renewcommand{\arraystretch}{1.25}
+    \setlength{\tabcolsep}{12pt}
+
+    \begin{tabular}{>{\bfseries}c
+                    S[table-format=2.3]
+                    S[table-format=1.3]}
+        \rowcolor{thesisblue}
+        \textcolor{white}{\textbf{Run}} &
+        {\textcolor{white}{\textbf{\%RSD}}} &
+        {\textcolor{white}{\textbf{\%Error vs Pre (accuracy)}}} \\
+        \hline
+
+        \rowcolor{thesislightgray}
+        43 & 5.28  & 0.677 \\
+        44 & 22.65 & 5.605 \\
+
+        \rowcolor{thesislightgray}
+        45 & 0.012 & 0.004 \\
+        46 & 0.012 & 0.008 \\
+
+        \rowcolor{thesislightgray}
+        47 & 0.232 & 0.047 \\
+        48 & 0.181 & 0.004 \\
+
+        \rowcolor{thesislightgray}
+        49 & 0.012 & 0.012 \\
+        50 & 0.012 & 0.012 \\
+
+        \hline
+
+        \rowcolor{thesislightgray}
+        Overall (43--50) & 7.16  & 0.511 \\
+        Post-irradiation & 0.012 & 0.016 \\
+
+        \rowcolor{thesislightgray}
+        Pre-irradiation  & 0.016 & 0.000 \\
+
+        \hline
+    \end{tabular}
+
+    \caption{Precision and accuracy relative to pre-irradiation.}
+    \label{tab:precision-accuracy-relative-pre-irradiation}
+    \arrayrulecolor{black}
+\end{table}
+
+Finally, the analysis for this test concludes with the calculated cross-section with an 95\% confidence interval Poisson distribution with an upper limit of
+
+\begin{equation*}
+    \sigma_{upper} = 3.22 \cdot 10^{-12} cm^2
+\end{equation*}
+
+And one important note is that the PSI radiation tests are not fully representative of the CERN LHC environment. For example, the dose rates used for the tests are enormous compared to most of the LHC positions where COTS electronics are placed, and furthermore, the ratio between DDEF is higher in LHC.
+
+The device was selected as it appeared to be a decent candidate for integration in the first prototype.
+
+\section{Final Hardware System Design}
+\label{sec:final-hardware-overview}
+
+In reality the design and testing of the prototype motor controller was an iterative process but the same principles that were analyzed before applied. In this section, the main iterations of the design will be presented and these are the systems that will be analyzed in the final chapter of the thesis.
+
+\subsection{Rad-Tol Motor Controller - Iteration 1}
+
+The first iteration of the motor driver serves one main purpose: to help validate the functionality of the system, develop the custom firmware, and perform the initial radiation tests. These tests are used to observe possible failures, evaluate the importance of the collected data, and gradually improve the system in terms of observability. More specifically, this iteration helps determine which data are useful, which are not, what additional data could be valuable, and how the test bench can be improved.
+
+The board design files, including the Altium project files and associated manufacturing specifications, are available through the CERN Engineering Data Management System (EDMS) under project \textit{EDA-05226-V1-0 v.0}.\footnote{\url{https://edms.cern.ch/ui/\#!master/navigator/item?P:101857775:101857776:subDocs}}
+
+\begin{figure}[H]
+    \centering
+
+    \begin{subfigure}{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{04_DesignForRadiationEnvironment/images/EDA-05226-V1-0_Front.png}
+        \caption{Front side}
+        \label{fig:pcb-iter-1-front}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{04_DesignForRadiationEnvironment/images/EDA-05226-V1-0_Back.png}
+        \caption{Back side}
+        \label{fig:pcb-iter-1-back}
+    \end{subfigure}
+
+    \caption{3D render of the first iteration prototype PCB, generated using the KiCad 10.0 render tool with ray tracing enabled}
+    \label{fig:3d-render-pcb-iter-1}
+\end{figure}
+
+\subsection{Rad-Tol Motor Controller - Iteration 2}
+\label{subsec:pcb-iter-2}
+
+This section presents the second and most important iteration of the Rad-Tol motor controller. This version applies the lessons learnt from the previous design and integrates improved circuits for motor driving. The system was redesigned from the beginning, with some of the most important changes being:
+
+\begin{itemize}
+    \item The voltage rails were split into three separate rails: 5 V, 12 V, and 20 V, making it easier to observe and isolate what is going wrong during testing
+    \item An LDO was added to step down the voltage from 5 V to 3.3 V for the digital circuits
+    \item The discrete difference amplifier was replaced with an integrated current-sense amplifier, the INA214, which has RaTOPUS heritage
+    \item An external voltage reference IC was added to provide an accurate offset voltage for the current-sense amplifier
+    \item An external bootstrap diode was included so that the PCB is compatible with both the L6498D and NCP5183 gate drivers
+    \item An external watchdog IC was added, based on BatMon heritage
+    \item The LDO was changed to a more compact part with stronger design heritage from BatMon and DIOT
+\end{itemize}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth,keepaspectratio]{04_DesignForRadiationEnvironment/images/system_architecture-1.pdf}
+  \caption{FInal systems architecture}
+  \label{fig:final-pcb-system-architecture}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth,keepaspectratio]{04_DesignForRadiationEnvironment/images/BLDC_Motor_Driver.png}
+  \caption{The final PCB 3D using built-in KiCad 9.0 render tool with raytracing}
+  \label{fig:final-pcb-3d-render}
+\end{figure}
+
+\section{Firmware Design \& Implementation}
+
+This section documents the design and implementation of the custom firmware developed for the motor-control system. For the needs of this work, a complete Field-Oriented Control (FOC) firmware stack was developed from scratch. Although several existing FOC implementations are available, most of them are tightly coupled either to specific hardware platforms, vendor-provided abstraction layers, or microcontrollers with significantly higher computational capabilities.
+
+FOC is inherently a real-time control algorithm. It depends on physical quantities acquired from the hardware, such as phase currents and rotor position, while also requiring deterministic execution of the control loops. As a result, many existing implementations make direct use of platform-specific peripherals, hardware accelerators, or vendor-specific HAL functions. This makes them difficult to reuse on a constrained microcontroller such as the SAMD21, especially when additional requirements such as radiation-test monitoring and fault-mitigation mechanisms must be integrated.
+
+Open-source projects such as ODrive and VESC provide mature motor-control solutions, but they target specific hardware architectures and microcontrollers with considerably higher processing capabilities. Another open-source option is SimpleFOC, which is a valuable educational and prototyping framework. However, its reliance on the Arduino API makes it less suitable for a tightly optimized firmware implementation where precise peripheral timing, deterministic interrupt execution, and low-level control of the hardware are required.
+
+For these reasons, a fully custom firmware implementation was selected. The main motivations were:
+
+\begin{itemize}
+    \item \textbf{Performance:} The firmware must execute the current-control loop within strict real-time limits while also supporting additional monitoring and fault-mitigation logic required during radiation testing.
+    
+    \item \textbf{Scalability:} The architecture should allow future extensions, such as support for different motor types, alternative velocity estimators, modified sensing hardware, different pinouts, and additional diagnostic peripherals.
+    
+    \item \textbf{Portability:} Although the prototype is based on the SAMD21 MCU, the control logic should remain separated from the hardware abstraction layer so that it can be migrated in the future to another MCU or even to an FPGA-based implementation.
+
+    \item \textbf{Maintainability:} 
+    
+    \item \textbf{Observability and fault analysis:} Since radiation-induced faults can affect both data and control flow, it is necessary to understand the role of each control parameter and internal state variable. A custom implementation makes the firmware behavior easier to inspect, instrument, and reverse engineer during fault events.
+\end{itemize}
+
+A modern embedded development workflow was followed. Microchip Harmony 3 and MPLAB MCC were used for the generation of the low-level peripheral drivers. The remaining firmware was written manually in C++17, using CMake as the build-system generator, ARM GCC as the compiler and linker toolchain, and OpenOCD for programming and debugging the target device.
+
+\subsection{FOC Implementation on the SAMD21 MCU}
+
+As discussed previously, FOC must satisfy hard real-time requirements. The innermost current-control loop is the most time-critical part of the algorithm and must be synchronized with the PWM carrier. In this implementation, the current loop is executed from the ADC result-ready interrupt, immediately after the phase-current samples have been acquired.
+
+To obtain fresh current measurements at the correct instant of the PWM cycle, the SAMD21 event system is used. The TCC0 peripheral generates the three-phase PWM waveform, while its fourth compare channel, which is not connected to an inverter phase, is configured as a sampling trigger. This compare event initiates the ADC conversion through hardware, avoiding software-trigger jitter and ensuring that the current samples are consistently acquired at the selected point of the PWM period.
+
+Once both ADC channels have been sampled, the ADC interrupt converts the raw measurements into phase currents, executes the current-control routine, computes the new SVPWM duty cycles, and writes the updated values to the TCC0 registers. This creates a deterministic chain from PWM generation to current sampling and finally to duty-cycle update.
+
+But the SAMD21 ADC comes with a significant restriction; the sampling of the channels is not simultaneous and thus the current samples cannot be by principal at the same point of the PWM period. From testing, it appeared that it is not possible to sample all three phase currents $I_a, I_b, I_c$ inside the PWM period due to the conversion overhead but even if it was, the sampling would be spread across the whole period resulting in inaccurate noisy measurements. For that reason, only the currents $I_a$ and $I_b$ are sampled and the third current is assumed by the three-phase relation for currents
+
+\begin{equation*}
+    I_a + I_b + I_c = 0
+\end{equation*}
+
+The Timer Counter for Control applications (TCC) peripheral is used and it provides 4 independent channels that can be used along with a complementary channel for driving the low and high side of a half-bridge. Furthermore, the control of a three-phase inverter requires the 3 of the 4 channels so the 4th is configured as a compare-match channel that generates a hardware event (through EVSYS) that triggers tha ADC conversion. When the ADC completes the conversion, the result of $I_a$ is stored and then a new conversion is triggered through software. When the second sample $I_b$ becomes available, the innermost block of the algorithm runs. This whole process can be depicted in figure \ref{fig:adc-isr}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth,keepaspectratio]{04_DesignForRadiationEnvironment/images/ADC_ISR.pdf}
+  \caption{FOC current control loops execution flow inside ADC ISR}
+  \label{fig:adc-isr}
+\end{figure}
+
+The above implementation is essentially the inner current control loops that run at real-time, and are the "heart" of the true current control mode FOC and runs at PWM rate. The next step is to introduce the velocity and position control loops. These are not as important to run at that high rate and are usually running at lower speed e.g. < 5KHz. For the needs of this implementation, a Timer/Counter peripheral instance is configured as a Timer that runs these routines at a set interval, for example 3 KHz. An important note to be made is that due to performance constraints, the reading of the angle $\theta_m$ and consequently the electrical angle $\theta_e$ is down-sampled at the rate of the velocity/position loop execution. That is because the CPU was working at almost 100\% load and most of the times the ADC ISR was using stale values either way.
+
+For the communication with the SPI interface of the AS5047P magnetic encoder, a device driver was implemented in C++. Such an approach was followed in order to isolate the AS5047P logic, calculations and error handling from the HAL and enhance maintainability and portability. The sensor itself offer many protocols for reading the angle (PWM, UVW, SPI) and can only be configured through SPI. Furthermore, the driver is implemented in non-blocking/interrupt mode and not blocking, thus there are callbacks functions defined in order to be passed to the SPI Read interrupt handler.
+
+\subsection{Compiler Options}
+
+Finally, one of the most important optimizations that were applied to the software are the compiler optimizations that vastly improved the systems' performance and made the control feasible. Below, a comparison of the executable image size is showcased. Some more compiler options that helped the system were fnolto fnoexceptions fnortti.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{lrrrr}
+        \toprule
+        \textbf{Optimization flag} & \textbf{.text (B)} & \textbf{.data (B)} & \textbf{.bss (B)} & \textbf{Total ROM (B)} \\
+        \midrule
+        \texttt{-O1}          & -- & -- & -- & -- \\
+        \texttt{-Os}          & -- & -- & -- & -- \\
+        \texttt{-O3}          & -- & -- & -- & -- \\
+        \texttt{-O3 -flto}    & -- & -- & -- & -- \\
+        \bottomrule
+    \end{tabular}
+    \caption{ELF executable size comparison when using different compiler options}
+    \label{tab:executables-comparison}
+\end{table}
+
+\subsection{Compile-Time Computations \& Startup Calibration}
+
+One of the main reasons that C++ was preferred is for its ability to perform calculations at compile time with constexpr and consteval. This is particularly useful in FOC as it contains calculations that are necessary to happen at compile time. For specifically, at the beginning of the software, there is an initialization and calibration routine that has to run. This includes the calculation of the trigonometric LUTs and their storage into flash memory and the alogirithmic zero offset electrical angle calculation and the direction calibration. Those are described in chapter \ref{chapter:motor-control-selection} as well.
+
+\textbf{Compile-Time LUT Computation} \\
+The LUTs for sine and cosine are calculated at compile time and then written directly in Flash and optionally can be copied in sram during startup. For the tests the LUTs remained in flash for safety as the corruption of sequential data would be unacceptable for the control stability.
+
+Since the C++20 standard that is used does not support \texttt{constexpr} functions of the \texttt{<cmath>} library, an external open-source library is utilized, and more specifically the GCE-Math library~\cite{ohara_gcem}.
+
+Due to the absence of FPU in the specific MCU, Q15 fixed-point arithmetic was used for minimum CPU overhead in computations. Furthermore, C++ zero-overhead features such as operator overloading, provide an elegant way to read from the LUT which is an \texttt{std::array} by feeding either the angle in mrad or in raw 14-bit which is the format that AS5047P magnetic encoder uses.
+
+\textbf{Startup Calibration} \\
+This runs before the actual FOC commutation and is a state machine that sequentially aims to find the zero offset electrical angle and also characterize the direction as CW or CCW so that physically changing the order of the phases of the motor does not lead to different motion.
+
+\subsection{Radiation-Induced Faults Mitigation Attempts}
+
+As is already discussed, radiation can affect electronics and degrade or derail the control as the MCU will suffer from SEE. The idea is to monitor the behavior of a system without such mitigation schemes, note down the symptoms that appear on the controllability of the system and implement methods that might be able to mitigate them.
+
+Of course, there are quite a few events that can lead to loss of controllability. The easiest case to catch is the appearance of a SEFI in the device that will put the MCU in a non-functional state that can be referenced as crashing. Thus, a watchdog timer (WDT) peripheral would be very useful to be introduced. Since the internal WDT of the device does not appear to be radiation tolerant, for more than 100 Gy, an external WDT is introduced at the second iteration of the motor controller. For the first iteration, the external WDT functionality is substituted by the control room PC that runs the telemetry parsing and instrumentation control software.
+
+\textbf{Software Triple-Modular Redundancy}
+
+Although TMR is by principle most effective when implemented in hardware (e.g. in FPGAs) as it guarantees the best performance and hardening with techniques like triplicated voters. On the other hand, there are general software reliability techniques like N-version programming. With N-version programming, one process that would normally run, is split into N identical processes that run in parallel and in the end the output is determined by a custom voter, as shown in figure \ref{fig:N-version-programming}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth,keepaspectratio]{04_DesignForRadiationEnvironment/images/N-version.pdf}
+  \caption{N-version programming software reliability technique}
+  \label{fig:N-version-programming}
+\end{figure}
+
+Since the MCU does not support multi-threading, the implementation does not utilize a Real-Time Operating System (RTOS), and this would be extremely costly in performance, the technique that is utilized is a software TMR that reads critical variables from three different places at RAM. The idea behind this is that there are many critical variables that are calculated at runtime and exist in RAM that a mistake in them can drive the algorithm to complete instability. Such variables are parameters of the algorithm, like the zero offset electrical angle (the constant that is correcting the electrical angle at each update) and the direction variable, as well as the state variables of the state machines. A big issue that needs to be resolved when storing three copies of the critical variables, is to place them at a big enough distance in memory layout so that if one block of memory suffers due to SEU, it does not affect the next memory blocks.
+
+The way that this is achieved is by utilizing the linker script and the startup code. Therefore, in the linker script there are three different sections/banks that are declared there and are guaranteed to be 4096 bytes away placed. The layout of the RAM should look like the figure \ref{fig:samd21-ram-layout}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[
+    width=\textwidth,
+    height=\textheight,
+    keepaspectratio
+  ]{04_DesignForRadiationEnvironment/images/SAMD21_RAM.pdf}
+  \caption{Configured SRAM layout of the SAMD21 MCU}
+  \label{fig:samd21-ram-layout}
+\end{figure}
+
+Note that the stack is put on the beginning of the memory so that if a stack overflow event appears, it can be handled in a hard-fault handler callback function.
+
+So, instead of just reading one variable in code, actually three variables are read and the majority voter is applied. Of course, this is expected to bloat the code so the number of variables marked as critical should be as reasonable as possible. The process is showcased in figure below. The breadcrump technique is used to store some diagnostics in order to be able to detect what failed and caused the MCU to reset.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[
+    width=\textwidth,
+    height=\textheight,
+    keepaspectratio
+  ]{04_DesignForRadiationEnvironment/images/SAMD21_RAM_TMR.pdf}
+  \caption{Reading three copies of a variable and performing TMR}
+  \label{fig:samd21-ram-layout}
+\end{figure}
+
+There are several ways for the MCU to be reset. Fortunately, there is a register from which we can understand what kind of reset happened. The most sneaky case is the case of the software reset (writing to the specific bit that resets the CPU) which is a case that many might have gone wrong. The SAMD21 \texttt{RCAUSE} register is a read-only register located at offset \texttt{0x38}. It records the source of the most recent device reset. The individual flags are summarized in Table~\ref{tab:samd21_rcause}.
+
+\begin{table}[H]
+    \centering
+    \small
+    \renewcommand{\arraystretch}{1.15}
+    \begin{tabularx}{\textwidth}{c c X X}
+        \toprule
+        \textbf{Bit} & \textbf{Flag} & \textbf{Meaning} & \textbf{Possible cause} \\
+        \midrule
+        6 & \texttt{SYST}  & System reset request
+          & Software-triggered reset, fault recovery routine, or debugger/programmer reset \\
+
+        5 & \texttt{WDT}   & Watchdog timer reset
+          & Firmware hang, blocked interrupt, infinite loop, or missed watchdog refresh \\
+
+        4 & \texttt{EXT}   & External reset
+          & Reset pin asserted by button, debugger, supervisor circuit, or reset-line glitch \\
+
+        2 & \texttt{BOD33} & Brown-out on the \SI{3.3}{\volt} domain
+          & \SI{3.3}{\volt} rail dip due to regulator dropout, load transient, supply instability, excess current, or latch-up-like event \\
+
+        1 & \texttt{BOD12} & Brown-out on the \SI{1.2}{\volt} core domain
+          & Internal core supply dip due to main supply disturbance, internal regulator instability, or excessive core current \\
+
+        0 & \texttt{POR}   & Power-on reset
+          & Power-up, power cycle, complete supply collapse, or deep voltage drop \\
+        \bottomrule
+    \end{tabularx}
+
+    \caption{Summary of the SAMD21 \texttt{RCAUSE} reset flags}
+    \label{tab:samd21_rcause}
+\end{table}
+
+\textbf{External WDT ISR Health Checks}
+

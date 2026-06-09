@@ -1,0 +1,102 @@
+\chapter{Radiation Effects on Electronics}
+\label{sec:radiation_effects}
+
+Radiation, including ionizing radiation, is present everywhere around us, both on Earth and throughout the solar system. It can be of natural origin, come from nuclear fusion, medical applications, scientific experiments, and of course from space and stars. The extremely rapid evolution of technology over the past few decades is making humans more and more ambitious in what they can push science to achieve, whether this is making new scientific discoveries, producing cleaner energy through nuclear technologies, or reaching new milestones in space exploration.
+
+All this development requires the use of more and more electronics as part of critical systems. These electronics are also becoming more sophisticated, both in their physical manufacturing and in their digital logic. Thus, engineers have to be as thorough as possible during the selection and integration of these components into their systems. In order to ensure that a proper qualification process is followed, it is very important to further understand the effects that radiation can have on electronics, and to understand the interaction between particles and matter.
+
+In this chapter, an introduction and a brief explanation of these effects are presented. First, the different radiation environments relevant to this work are introduced. Then, the main radiation effects on electronics are discussed, including Total Ionizing Dose, Single Event Effects, and Displacement Damage. Finally, radiation-induced fault mitigation techniques and the test facilities used for radiation qualification are presented.
+
+\section{Particles-Matter Interaction Mechanisms}
+In this part, a brief overview of the radiation mechanisms and the interaction between particles and matter, and will be followed by its effects on electronics. As will be discussed, these radiation effects are, mainly, divided to \textit{i) cumulative effects}, and \textit{ii) single event effects}. The former is caused by the progressive degradation over time due to the interaction with a lot of ionizing particles, while the latter are stochastic events that happen by the interaction with even one particle.
+
+The interactions of particles with the matter, are essentially stochastic processes that are explain by the laws of quantum physics and relativity theory. And there are a few types of particles, to name a few:
+
+\begin{itemize}
+    \item Hadrons, composite particles that can be charged or neutral, stable, meta-stable, or unstable
+    \item Charged leptons
+    \item Photon, carriers of the electromagnetic interaction
+    \item Heavy bosons
+\end{itemize}
+
+When we talk about particle-matter interaction, we are essentially talking about the interaction between the different types of particles with the atoms (nucleus, and electrons). In the following subsections, the basic mechanisms are introduced. Starting by the interactions of photons, followed bys the ones with atomic electrons, and atomic nuclei
+
+\subsection{Photons interacting with matter}
+
+\subsection{Nuclear interactions}
+
+\subsection{Coulombic interactions}
+
+
+This is the type of interactions that lead to the ionization (or excitation) of the atoms, via the production of knowck-off electrons. 
+
+\section{Radiation Effects on Electronics}
+
+The aforementioned interactions of radiation with electronics can induce several effects on the material of the semiconductors. More specifically, we can categorize the effects into three main categories that are used in literature and are for sure enough for the scope of this thesis.
+
+\begin{table}[H]
+    \centering
+
+    \small
+    \renewcommand{\arraystretch}{1.25}
+
+    {
+    \arrayrulecolor{thesisblue}
+
+    \begin{tabularx}{\textwidth}{
+        >{\raggedright\arraybackslash}p{0.22\textwidth}
+        >{\raggedright\arraybackslash}X
+        >{\raggedright\arraybackslash}p{0.21\textwidth}
+        >{\raggedright\arraybackslash}p{0.18\textwidth}
+    }
+        \toprule
+        \textcolor{thesisblue}{\textbf{Radiation effect}} &
+        \textcolor{thesisblue}{\textbf{Parameter(s)}} &
+        \textcolor{thesisblue}{\textbf{Particles}} &
+        \textcolor{thesisblue}{\textbf{Units}} \\
+        \midrule
+
+        TID &
+        Ionizing dose in material &
+        Electrons, Hadrons &
+        Gy, rad \\
+
+        \rowcolor{thesisblue!7}
+        TNID, or DD &
+        Displacement damage equivalent dose; equivalent fluence of 10 MeV protons / 1 MeV electrons &
+        Electrons, Hadrons, Neutrons, Ions &
+        MeV/g, cm$^{-2}$ \\
+        
+        SEE, direct ionization &
+        Events per unit fluence from LET spectra and cross section vs LET &
+        Ions, $Z > 1$ &
+        cm$^{2}$ vs MeV cm$^{2}$/mg \\
+
+        \rowcolor{thesisblue!7}
+        SEE, nuclear reactions &
+        Events per unit fluence from energy spectra and cross section vs particle energy &
+        Hadrons, Neutrons, Ions &
+        cm$^{2}$ vs MeV \\
+
+        \bottomrule
+    \end{tabularx}
+
+    \arrayrulecolor{black}
+    }
+
+    \label{tab:radiation-effects-overview}
+    \caption{Radiation effects overview with the relevant parameters, particles and typical units}
+\end{table}
+
+\subsection{Total Ionizing Dose (TID)}
+
+We are taling about the deposited energy per mass. The measurements units that are frequently used are Gray (Gy) and rad. In this thesis, from now on, we measure the TID in Gy.
+
+\textbf{Effects on semiconductors}
+
+\subsection{Total Non-Ionizing Dose (Displacement Damage)}
+
+\textbf{Effects on semiconductors}
+
+\subsection{Single Event Effects (SEE)}
+

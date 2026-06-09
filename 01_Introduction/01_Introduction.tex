@@ -1,0 +1,73 @@
+\chapter{Introduction}
+\label{sec:introduction}
+
+\section{Motivation}
+
+Robotics exist to serve people and help automate repetitive tasks, but most importantly, to automate tasks that are hazardous for humans. This can include cases where the task itself involves physical risks, such as working at height or underwater, but also cases where the environment is toxic and can put human lives in danger.
+
+Such applications can be found in highly radioactive environments. On Earth, these are usually artificial radiation environments, such as nuclear power plants, nuclear research centers, and particle accelerators.
+
+Therefore, applications such as nuclear decommissioning, nuclear waste management, and interventions in radioactive areas require robust solutions that are tolerant to radiation.
+
+Radiation adds a very serious layer of complexity to modern electronics, as it creates many sources of errors, degradation, and permanent failures. This makes many commercial systems unsuitable for these kinds of applications. Similar problems also appear in other fields, such as space missions, where solutions have already been developed for operating under harsh conditions. For example, there are ICs that are radiation-hardened by design, usually referred to as space- or military-grade components. These devices are designed to operate in very demanding conditions, including radiation, vacuum, and thermal stress. However, such solutions are not always viable when electronics need to be deployed in large quantities. For this reason, COTS components are often used, since they significantly reduce production cost and allow easier prototyping and procurement.
+
+There are many examples of COTS components being used in the environments discussed above. Focusing on CERN, most of the systems deployed in the accelerator complex are discrete systems made from COTS components. Of course, depending on their position inside the accelerator, the electronics are exposed to different radiation levels. The use of COTS components in such systems is not random, but instead requires thorough testing and qualification, usually through component-level tests using different methods and facilities. CERN has developed its own Radiation Hardness Assurance protocols, and there is also a lot of ongoing research in this direction. The Radiation to Electronics (R2E) project is one of the leading efforts at CERN studying the effects of radiation on electronics.
+
+The work is part of a cooperation between the \textbf{E}lectronics \textbf{P}roduction \& \textbf{R}adiation tolerance (\textbf{EPR}) and \textbf{M}echatronics, \textbf{R}obotics \& \textbf{O}peration (\textbf{MRO}) sections of the \textbf{C}ontrols, \textbf{E}lectronics \& \textbf{M}echatronics (\textbf{CEM}) group.
+
+\section{Thesis Objectives Outline}
+
+Considering the aforementioned, the following question is formulated:
+
+\vspace{1em}
+
+\begin{center}
+    \begin{minipage}{0.65\textwidth}
+        \centering
+        \itshape
+        \normalsize
+        ``Can we develop radiation-tolerant robotic arms for use in CERN accelerators, even during beam time?''
+    \end{minipage}
+\end{center}
+
+\vspace{1em}
+
+The main objective of this thesis is to lay the technical foundation for answering this question. This is done by starting from scratch and delivering a prototype servo mechanism that can act as a proof of concept for future developments.
+
+The points of interest are, of course, to gather the requirements of a motor driver system, decide on an appropriate algorithm to drive the motor, and provide real hardware and software implementations. Furthermore, a very important objective is the development of a reproducible test setup that can be installed in different facilities and allow for further radiation tests.
+
+More specifically, this thesis aims to address the following objectives:
+
+\textbf{Objective 1.} Design a prototype servo system based on discrete, radiation-characterized components.
+
+\textbf{Objective 2.} Implement an advanced motor control algorithm, while considering the need for portability across platforms, scalability, and radiation-induced error mitigation techniques.
+
+\textbf{Objective 3.} Develop a complete motor test bench that can be reproduced and used in different facilities to evaluate hardware and control degradation under irradiation.
+
+\textbf{Objective 4.} Identify the different error modes, analyze how they affect the control behavior, and evaluate whether safety standards are violated.
+
+\textbf{Objective 5.} Propose ideas for future work.
+
+An initial target of 500 Gy was set.
+
+The final deliverables of this work include:
+\begin{enumerate}
+    \item A prototype motor driver board that was proved radiation tolerant up to 650 Gy ($^{60}Co$ source)
+    \item A Field-Oriented Control (FOC) Cortex-M0+ firmware developed from scratch in C++ and including the control algorithm execution and state machines, hardware abstractions, radiation-induced fault mitigation attempts, and utilities for diagnostics and maximum during-test observability
+    \item A fully reproducible motor test bench, including the mechanical CAD files for integration of a hollow-shaft BLDC motor, magnet, and golden reference external LVDT resolver at the irradiation room side, and the hardware and software at control room side
+    \item Analysis of the results of the irradiation tests that were performed at CHARM and CC60 facilities at CERN
+\end{enumerate}
+
+\section{Thesis Structure Outline}
+
+The thesis is structured as follows:
+
+\textbf{Chapter 2} introduces the fundamentals of radiation effects on electronics, covering the effects on semiconductor devices and modern CMOS technology ICs.
+
+\textbf{Chapter 3} discusses the selection of the motor, the control algorithm, and the hardware requirements.
+
+\textbf{Chapter 4} presents the design and implementation of the full motor control system, both hardware and software, based on radiation-tested components. It also presents the control benchmarks and the complete motor test bench.
+
+\textbf{Chapter 5} presents the results of the radiation tests, as well as the iterative process followed to improve the radiation tolerance of the system.
+
+\textbf{Chapter 6} summarizes the lessons learnt and proposes future steps towards further improving the system performance.
