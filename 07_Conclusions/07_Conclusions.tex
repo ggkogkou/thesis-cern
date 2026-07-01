@@ -1,0 +1,14 @@
+\chapter{Conclusions}
+\label{chapter:conclusions}
+
+This thesis aimed to design and evaluate under radiation a prototype motor control system incorporating both hardware and software, with the goal of laying the foundations for future radiation-tolerant designs to be integrated into CERN's robotic systems.
+
+The process was iterative; it started with an initial prototype, which evolved into an improved system based on the lessons learned from each test. This process included not only troubleshooting the failed boards and replacing specific components, but also improving the system's observability during testing. Most of the components used to build the motor driver had already been tested at the component level, meaning that pre-existing data were available, although not necessarily under the same radiation types as those representative of the LHC environment. Previously qualified components were shown to still constitute potential root causes of failure, with the most significant example being the L6498D gate driver, which led to system failure in every test in which it was used.
+
+For position sensing, the AS5047P magnetic encoder was tested at the component level before its integration into the system. This constitutes a useful addition to CERN's database of radiation-tested components, as no other tested position-sensing element was previously available.
+
+Furthermore, the effects of SEEs on a complete Field-Oriented Control implementation were assessed, providing useful insights into how loss of controllability can occur. A proposed solution for mitigating these faults was implemented, yielding an approximately 47\% lower cross-section.
+
+The final system, using the NCP5183 gate driver, reached 646.8~Gy of TID, exceeding the target of 500~Gy. However, it has not yet been tested at CHARM under mixed-field irradiation, where the effects of Displacement Damage and Single-Event Effects could also be evaluated.
+
+Therefore, the natural next step would be to perform system-level tests of the proposed system at CHARM, while introducing further techniques to improve observability and paying particular attention to identifying the exact origin of the observed errors. The breadcrumb technique is proposed in this thesis for this purpose. Moreover, a more specific application and its corresponding requirements should be defined. This is necessary because the SAMD21G18 MCU offers relatively limited performance for advanced motor-control applications. Therefore, the eventual migration to another MCU or an FPGA should also be evaluated.

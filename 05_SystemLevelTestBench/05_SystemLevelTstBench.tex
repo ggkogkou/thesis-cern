@@ -1,32 +1,16 @@
 \chapter{Experimental Setup: Design, Integration, and Evaluation Metrics}
+\label{chapter:test-bench-design}
 
-This chapter describes the design of the complete system test setup developed for radiation testing of the motor controller. The objective was to build an easily reproducible test bench that minimises the overhead involved in replacing irradiated parts, updating firmware, or reconfiguring the data acquisition system between test campaigns.
-
-The following aspects of the setup are covered in this chapter:
-
-\begin{itemize}
-\item Design of the mechanical structure for PCB, magnet, and motor integration
-\item Design of the mechanical structure for resolver integration
-\item Implementation of the data acquisition software
-\item Development of the testing procedures
-\end{itemize}
+This chapter describes the design of the complete system test setup developed for radiation testing of the motor controller. The objective was to build an easily reproducible test bench that minimizes the overhead involved in replacing irradiated parts, updating firmware, or reconfiguring the data acquisition system between test campaigns. It covers the mechanical design for PCB, magnet, motor, and resolver integration, the data acquisition software, and the methodology used to process and evaluate the resulting test data.
 
 \section{System Requirements and Constraints}
 \label{sec:system-requirements}
 
-Before describing the individual components of the setup, it is important to establish what was known beforehand and what the realistic goals were. This requires answering two questions:
-
-\begin{enumerate}
-\item What is needed to functionally integrate all the components of the system?
-\item What constraints are imposed by the irradiation facilities?
-\end{enumerate}
+This section outlines the functional integration requirements and the constraints imposed by the irradiation facilities.
 
 \subsection{Evaluation Methodology}
 \label{subsec:evaluation-methodology}
-
-In order to develop the test procedures, it is first necessary to define the type of control that will be evaluated. The motor controller is evaluated in position control mode, for two main reasons. First, robotic arm applications are inherently servo applications, so position accuracy is the most relevant performance metric. Second, position readout from the resolver is more straightforward than velocity estimation: sampling the angle at regular intervals avoids the information loss introduced by numerical differentiation between samples, making it a more reliable metric.
-
-The system integrates four main components: i) the motor driver PCB, ii) a 6\,mm round permanent magnet, iii) a brushless DC motor, and iv) a rotary resolver. The motor selected for this setup is the \textit{GM4108H-120T Gimbal Motor}, which was already available in large stock at CERN. This is a hollow-shaft motor, and this characteristic has direct implications on the mechanical design, as all components must be aligned along a common vertical z-axis.
+The motor controller is evaluated in position control mode for two main reasons. First, robotic arm applications are inherently servo applications, making position accuracy the most relevant performance metric. Second, resolver-based position readout is more reliable than velocity estimation, as sampling the angle at regular intervals avoids the information loss introduced by numerical differentiation between samples.
 
 \subsection{Resolver and Readout System}
 \label{subsec:resolver-readout}
@@ -35,14 +19,15 @@ The resolver integrated in this setup is the same model used in the collimator s
 
 For reading the resolver output, the \textit{EVAL-AS2S1210} evaluation board by Analog Devices is used, which is based on the same IC used by BE-CEM-MRO in their collimator systems. The resolver requires its signal cables to be routed as twisted pairs to maintain signal integrity, which has direct consequences on the cabling strategy described in Section~\ref{subsec:resolver-cabling}.
 
+A custom BE-CEM-MRO readout solution for the \texttt{AS2S1210} has been developed to eliminate reliance on the vendor's proprietary software. The custom solution makes use of the \texttt{EVAL-AS2S1210} paired with a Raspberry Pi, which serves as a serial to SPI driver~\cite{weber2026rpfirmware}. This straightforward setup enables resolver readout through simple serial commands issued from either Python or C++ code.
+
 \subsection{Irradiation Facility Constraints}
 \label{subsec:facility-constraints}
-
 The setup must be compatible with three irradiation facilities: i) CHARM, ii) PSI PIF, and iii) CC60. While these facilities differ in beam type and geometry, the most relevant parameters for setup design are the radiation environment and the available cabling infrastructure.
 
-In CC60 and PSI PIF, only a localised region around the device under test is irradiated, so sensitive supporting equipment can be placed at a safe distance. In CHARM, however, the entire room is irradiated. This means that equipment such as UART-to-USB converters and the resolver readout board must be located outside the irradiation room in all cases, to ensure compatibility across all three facilities.
+In CC60 and PSI PIF, only a localised region around the device under test is irradiated, so sensitive supporting equipment can be placed at a safe distance. In CHARM, however, the entire room is irradiated. Therefore, equipment such as UART-to-USB converters and the resolver readout board must be located outside the irradiation room in all cases to ensure compatibility across all three facilities.
 
-All three facilities share a similar cabling infrastructure, with patch panels supporting BNC, RJ45, and USB connectors. For this setup, BNC and RJ45 connectors are used. The RJ45 connection is particularly well suited for the resolver signal routing: since Ethernet cables internally contain twisted pairs, they can directly serve the resolver's signal integrity requirements without any additional specialised cabling. Standard Ethernet cables are used on both the irradiation room and control room sides. The resulting connectivity is illustrated in Figure~\ref{fig:irradiation-control-rooms}.
+All three facilities share a similar cabling infrastructure, with patch panels supporting BNC, RJ45, and USB connectors. For this setup, BNC and RJ45 connectors are used. RJ45 is particularly well suited for resolver signal routing, as standard Ethernet cables contain twisted pairs that directly satisfy the resolver's signal integrity requirements without additional specialised cabling. The resulting connectivity is illustrated in Figure~\ref{fig:irradiation-control-rooms}.
 
 \begin{figure}[H]
 \centering
@@ -54,7 +39,7 @@ All three facilities share a similar cabling infrastructure, with patch panels s
 \section{Mechanical Design of the Test Bench}
 \label{sec:cad-test-bench-design}
 
-The mechanical structure integrating all system components was designed in SOLIDWORKS. The design is governed by strict alignment requirements, since the accuracy of the system depends on the correct positioning of each component along the common z-axis defined in the previous section:
+The mechanical structure integrating all system components was designed in SOLIDWORKS. Since the motor used in this setup has a hollow shaft, the design is governed by strict alignment requirements, as the accuracy of the system depends on the correct positioning of each component along a common axis passing through it:
 
 \begin{itemize}
 \item The permanent magnet must be fixed at the center of the rotor and aligned to the magnetic encoder with a maximum axial offset of 1\,mm.
@@ -129,12 +114,11 @@ In order to make even clearer the alignment and the design internally, in the fo
 
 \subsection{Material Selection and Manufacturing}
 \label{subsec:manufacturing}
+The primary manufacturing method used was FDM 3D printing in ABS, chosen for its thermal resistance during motor fault conditions. Since the structure must be reproduced after each CHARM test campaign — as irradiated components cannot be handled or reused outside the irradiation room — disposable 3D-printed parts were the most practical solution.
 
-The primary manufacturing method used was FDM 3D printing in ABS. ABS was chosen for its thermal resistance, which provides robustness in the event of motor overheating during fault conditions. More practically, 3D printing was the natural choice given that the structure had to be reproduced multiple times: after each CHARM test campaign, the assembled components become radioactive and cannot be handled or reused outside the irradiation room. Disposable, quickly reproduced 3D-printed structures were therefore the most practical solution.
+A version was also machined internally at CERN in aluminium via CNC. Despite the tighter tolerances, the resolver rotor still exhibited slight off-axis rotation, suggesting inherent angular runout in the motor rotor itself rather than a manufacturing deficiency.
 
-A version of the structure was also manufactured internally at CERN in aluminium via CNC machining. Despite the tighter dimensional tolerances achievable with CNC compared to the Bambu Lab 3D printer, the resolver rotor still exhibited slight off-axis rotation, which suggests that the hollow motor rotor itself may have some inherent angular runout rather than a manufacturing deficiency in the structure.
-
-Aluminium was selected as the preferred structural material for two reasons beyond machinability. First, it is non-magnetic, which is critical: a ferromagnetic material in close proximity would distort the field produced by the small permanent magnet and degrade encoder accuracy. Second, the aluminium structure simplified grounding considerably — it was bonded directly to the board ground at a single point, achieving a clean chassis ground and avoiding ground loops.
+Aluminium is non-magnetic, which is critical to avoid distorting the field of the permanent magnet and degrading encoder accuracy. It also simplified grounding, as the structure was bonded directly to board ground at a single point, avoiding ground loops.
 
 \subsection{Resolver Cabling}
 \label{subsec:resolver-cabling}
@@ -151,6 +135,7 @@ The RJ45 solution was selected. As already motivated in Section~\ref{subsec:faci
 Therefore, a Telegärtner MFP8-IE Cat.6\textsubscript{A} T568B RJ45 connector~\cite{telegaertner_mfp8_ie_t568b} was mounted at the resolver cable's end.
 
 \subsection{Fully Assembled System Demonstration}
+\label{subsubsection:fully-assembled-system}
 
 In figure \ref{fig:full-assembly-lab} is presented the fully assembled setup with all of its components. In chapter \ref{chapter:rad-tests-results} and section \ref{}, the RJ45 is also visible.
 
@@ -162,97 +147,131 @@ In figure \ref{fig:full-assembly-lab} is presented the fully assembled setup wit
 \end{figure}
 
 \section{Control Room Software}
+\label{section:control-room-sw}
 
-The last piece of the complete test bench setup is the software that is running in the control room. The software integrates all the outputs of the test system, namely the USART channels and the resolver signals. The languages that are used for this are Python and C++.
+The last piece of the complete test bench setup is the software running in the control room. The software collects all the signals from the test system, namely the USART channels and the resolver signals. It is implemented in Python and C++.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth, keepaspectratio]{05_SystemLevelTestBench/images/ControlRoomSoftwareOverview_cpp.pdf}
+    \caption{The C++ implementation of the acquisition software}
+    \label{fig:control-room-software-cpp}
+\end{figure}
+
+% The idea behind the software is to create three different threads that run in parallel as infinite loops. The responsibilities of each thread are well defined: the first one reads the incoming telemetry from the serial port using the \texttt{boost::asio} library and decodes the bytes. The decoded information is then logged in a CSV file on the hard disk. The second thread is responsible for reading the position from the independent resolver. A lightweight C++ driver, based on an existing repository script, reads the angle from the resolver and stores it in a CSV file on the hard drive. The resolver should be sampled at the highest safe frequency, as it is intended to serve as the primary data source for analysis. A third thread implements a software watchdog, providing this functionality on system variants that lack an external hardware watchdog by triggering a power cycle.
+
+The software runs three parallel threads, each implemented as an infinite loop, with clearly defined responsibilities. The first reads and decodes incoming telemetry from the serial port using the \texttt{boost::asio} library, logging the result to a CSV file on disk. The second reads the position from the independent resolver through a lightweight C++ driver, based on an existing repository script, and stores the angle in a CSV file; since the resolver serves as the primary data source for analysis, it is sampled at the highest safe frequency. A third thread implements a software watchdog, providing this functionality on system variants that lack an external hardware watchdog by triggering a power cycle.
+
+The watchdog monitors two events, summarized in Table~\ref{tab:software-watchdog}, and triggers a power cycle in response to either.
+
+\begin{table}[H]
+    \centering
+    \arrayrulecolor{thesisblue}
+    \renewcommand{\arraystretch}{1.25}
+    \setlength{\tabcolsep}{8pt}
+    \begin{tabular}{
+        >{\centering\arraybackslash}m{3.0cm}
+        >{\centering\arraybackslash}m{5.2cm}
+        >{\centering\arraybackslash}m{4.5cm}
+    }
+        \rowcolor{thesisblue}
+        \textcolor{white}{\textbf{Event}} &
+        \textcolor{white}{\textbf{Condition}} &
+        \textcolor{white}{\textbf{Watchdog Action}} \\
+        \hline
+        \rowcolor{thesislightgray}
+        Resolver angle unchanged &
+        Persists for $>$2 minutes &
+        Log timeout, trigger power cycle \\
+        No incoming UART data &
+        No data for $>$20 s (possible MCU crash) &
+        Log timeout, trigger power cycle \\
+        \hline
+    \end{tabular}
+    \caption{Watchdog-monitored events and their corresponding actions.}
+    \label{tab:software-watchdog}
+    \arrayrulecolor{black}
+\end{table}
+
+The software is compiled and launched by the PSU control Python script, which runs it as a sub-process. This script is the highest-level script executed in the terminal and serves a dual purpose: sampling the PSUs via PyVISA and SCPI commands to periodically read the currents and log them to a CSV file along with a Unix timestamp, and power cycling the DUT in the event of a fault. The important point here is that fault detection occurs in the C++ software and is communicated to the Python script, which then triggers a power cycle. The C++ software writes the resolver positions to stderr, which the Python script reads via a dedicated thread and prints to the console. A second thread reads from stdout, where the C++ code writes machine-readable commands, causing the Python script to trigger a power cycle upon receiving a fault notification.
+The whole thing is presented in figure \ref{fig:control-room-software}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth, keepaspectratio]{05_SystemLevelTestBench/images/ControlRoomSoftwareOverview.pdf}
+    \caption{The complete data acquisition software business logic.}
+    \label{fig:control-room-software}
+\end{figure}
 
 \section{Data Acquisition and Analysis Methodology}
 \label{sec:data-acquisition-methodology}
 
-\subsection{Elapsed Time and Dose Reconstruction}
-\label{subsec:dose-reconstruction}
+\subsection{Initial Test Data Post-Processing}
+\label{subsection:data-post-processing}
 
-A common data processing procedure was applied to the logged quantities before analyzing the irradiation results. All acquisition systems used Unix timestamps in UTC. Therefore, the absolute timestamp of each sample was first converted to elapsed irradiation time. If $t_i$ is the timestamp of sample $i$ and $t_0$ is the timestamp corresponding to the start of irradiation, the elapsed time is
+As discussed in Section~\ref{section:control-room-sw}, the data are stored as raw in a csv format file, therefore a some processing is required in order to be in a useful form for making conclusions.
 
-\begin{equation}
-\Delta t_i = \frac{t_i - t_0}{3600},
-\end{equation}
+\subsubsection*{Dosimetry Acquisition in Different Facilities}
 
-where $\Delta t_i$ is expressed in hours. Since the dose rate was calibrated at $\dot{D} = 30~\si{\gray\per\hour}$, the corresponding total ionizing dose was calculated as
+The big difference between CHARM and the PSI and CC60 facilities is that the dose rate at CHARM is nowhere near constant. Thus, the facility's dosimetry service provides the dosimetry data for CHARM during the various irradiation weeks. On the other hand, the dose rate is stable in PSI and CC60, and for that reason, the first step of the analysis is to convert the time into accumulated ionizing dose and, where relevant, displacement damage equivalent fluence.
 
-\begin{equation}
-\mathrm{TID}_i = \dot{D}\Delta t_i.
-\end{equation}
+Supposing that $t_0$ is the starting time of irradiation, the total elapsed time (given in hours) till $t_i$ since the irradiation started is
 
-This allows the measurements to be plotted directly as a function of accumulated dose, while a secondary axis can be used to show the equivalent elapsed irradiation time.
+\begin{equation*}
+    \Delta t_i = \frac{t_i-t_0}{3600}
+\end{equation*}
 
-\subsection{Angular Position and Velocity Estimation}
-\label{subsec:angle-velocity}
+Furthermore, since the dose rate is stable, $\dot{D} = \frac{dD}{dt}$, the corresponding TID is then given by the formula,
 
-The angular position was monitored using both the resolver and the AS5047P magnetic encoder. The AS5047P provides a 14-bit raw angle value, which was converted to degrees as
+\begin{equation*}
+    TID_i = \dot{D} \cdot \Delta t_i
+\end{equation*}
 
-\begin{equation}
-\theta_i = \frac{360^\circ}{2^{14}} r_i,
-\end{equation}
+At CC60, TID is the only quantity of interest since the photon field produces negligible displacement damage compared to the ionizing dose. At PSI, displacement damage is also of interest and expressed as the 1MeV-DDEF~\cite{ferraro_phd_thesis}. Since the beam delivers a stable dose rate, DDEF accumulates proportionally to TID, given by the following equation.
 
-where $r_i$ is the raw encoder reading. Since angular measurements are periodic, the angle was unwrapped before calculating derivatives. This avoids artificial jumps when the measured angle crosses the $0^\circ/360^\circ$ boundary.
+\begin{equation*}
+    DDEF_i = 1.69\times10^{9}~\text{cm}^{-2}\,\text{Gy}^{-1} \cdot TID_i.
+\end{equation*}
 
-The angular velocity was then estimated from the unwrapped angle $\phi_i$ using finite differences,
+\subsection{Position Samples Characterization}
+\label{subsection:position-samples-characterization}
+As discussed throughout this chapter, two sensors are used to sample the rotor position: the magnetic encoder and the golden-reference resolver. Since the AS5047P provides the angle as a 14-bit raw value, it must be converted to degrees as
+\begin{equation*}
+    \theta\,[^\circ] = \frac{360^\circ}{2^{14}} \cdot \theta_{raw}.
+\end{equation*}
+Furthermore, since the motion is circular and periodic, crossing the $0^\circ/360^\circ$ boundary requires attention, as it introduces large spikes when computing the speed through the differentiation $\omega = d\theta/dt$, or, in its discrete form obtained via finite differences,
+\begin{equation*}
+    \omega_i \approx \frac{\theta_{i+1} - \theta_{i-1}}{t_{i+1} - t_{i-1}}.
+\end{equation*}
+For this reason, the unwrapped angle $\theta^{\text{unwrapped}}$ is used instead, so that the expression becomes
+\begin{equation*}
+    \omega_i \approx \left|\frac{\theta^{\text{unwrapped}}_{i+1} - \theta^{\text{unwrapped}}_{i-1}}{t_{i+1} - t_{i-1}}\right|.
+\end{equation*}
+The direction of rotation is not relevant here and is therefore disregarded. The purpose of computing the speed is to classify each sample into one of two categories: \textit{i) transient}, and \textit{ii) settled}. This distinction matters because only the settled samples are used to evaluate accuracy and repeatability.
 
-\begin{equation}
-\omega_i \approx \frac{\phi_{i+1} - \phi_{i-1}}{t_{i+1} - t_{i-1}},
-\end{equation}
+Moreover, differentiation creates another problem: it makes the calculation highly sensitive to sampling noise. As a result, the angular velocity has to be smoothed before it can be used. For this, a rolling-median filter is used, since it is less sensitive to isolated spikes than a moving-average filter.
 
-and the absolute angular speed was computed as
+The filtered angular speed, denoted $\widetilde{\omega}_i$, is then classified using two separate thresholds: $h_{\mathrm{transient}}$, crossed while the rotor is accelerating, and $h_{\mathrm{settled}}$, crossed while the rotor is decelerating toward zero, which signals that the motion has settled. Mathematically, this is captured by the rule
+\begin{equation*}
+    f_i = \begin{cases}
+        1, & \widetilde{\omega}_i \geq h_{\mathrm{transient}}, \\
+        0, & \widetilde{\omega}_i \leq h_{\mathrm{settled}}, \\
+        f_{i-1}, & h_{\mathrm{settled}} < \widetilde{\omega}_i < h_{\mathrm{transient}},
+    \end{cases}
+\end{equation*}
+where $f_i = 1$ marks a moving sample and $f_i = 0$ marks a settled one. The third line is what makes the rule work: whenever the filtered speed falls between the two thresholds, the sample simply keeps the same label as the one before it, instead of switching back and forth every time the speed jitters slightly.
 
-\begin{equation}
-s_i = |\omega_i|.
-\end{equation}
-
-The absolute speed was used because the goal was to determine whether the rotor was moving or settled, independently of the rotation direction.
-
-\subsection{Motion Segmentation}
-\label{subsec:motion-segmentation}
-
-Because differentiation amplifies measurement noise, the speed signal was smoothed before identifying the motion intervals. A rolling median filter was used, since it is less sensitive to isolated spikes than a moving average:
-
-\begin{equation}
-\tilde{s}_i = \operatorname{median}\left(s_{i-k}, \ldots, s_i, \ldots, s_{i+k}\right).
-\end{equation}
-
-In this analysis, the window length corresponds to approximately \SI{3}{\second}. The smoothing was applied only to the derived speed signal used for motion detection; the original measured angle was kept for the position plots.
-
-The moving and settled periods were then identified automatically using two thresholds. A higher threshold was used to detect the central part of each movement, where the rotor was certainly moving. A lower threshold was then used to extend each detected interval backwards and forwards in time, so that the start and end of the motion were better aligned with the physical movement.
-
-The thresholds were estimated from the noise floor of the smoothed speed signal using the median and the median absolute deviation:
-
-\begin{equation}
-\sigma_{\mathrm{robust}} = 1.4826\, \operatorname{median}\left(\left|\tilde{s}_i - \operatorname{median}(\tilde{s})\right|\right).
-\end{equation}
-
-The higher threshold was used to identify the motion core, while the lower threshold was used to include the slower acceleration and deceleration regions. Very short detections were rejected, and neighbouring intervals separated by very small gaps were merged. The result is a set of motion intervals,
-
-\begin{equation}
-\mathcal{M}_j = \left[t_{\mathrm{start},j}, t_{\mathrm{end},j}\right],
-\end{equation}
-
-where the rotor is considered to be moving. Samples outside these intervals are considered settled. This procedure provides an objective way to separate the data into moving and settled states, without relying on visual inspection, and allows the same analysis to be applied consistently across all irradiation tests.
+Finally, the samples $i$ that map to $f_i = 0$ are kept for the analysis in terms of accuracy and repeatability of the control system.
 
 \subsection{Accuracy and Repeatability Metrics}
 \label{subsec:accuracy-repeatability-metrics}
 
+\subsubsection*{Definitions}
 Accuracy and repeatability are two core evaluation parameters when benchmarking a control system. While they might seem similar, they correspond to different properties of the system.
 
-\textbf{Accuracy} is the ability of the system to reach a final position close to the commanded position,
+\textbf{Accuracy} is the ability of the system to reach a final position close to the commanded position. In other words, it is a measure of the difference between the user commanded target (input in software) and the physical settling of the rotor (hardware output)~\cite{motionsolutions_accuracy_misconceptions}.
 
-\begin{equation*}
-e = |\theta_{\mathrm{cmd}} - \theta_{\mathrm{actual}}| < \delta, \qquad \delta \text{: the maximum allowable position error.}
-\end{equation*}
-
-\textbf{Repeatability} is the ability of the system to reach the same actual position consistently under repeated identical commands,
-
-\begin{equation*}
-r = \max_i(\theta_i) - \min_i(\theta_i) < \rho, \qquad \rho \text{: the maximum allowable variation between repeated attempts.}
-\end{equation*}
+\textbf{Repeatability} is the ability of the system to reach the same actual position consistently under repeated identical commands. It is often considered one of the most critical metrics in robotics, since poor accuracy can in principle be corrected in software once it has been characterized, whereas poor repeatability cannot be compensated for in the same way~\cite{motionsolutions_accuracy_misconceptions}.
 
 A visual reference for both metrics is provided in Figure~\ref{fig:accuracy-repeatability}.
 
@@ -263,134 +282,79 @@ A visual reference for both metrics is provided in Figure~\ref{fig:accuracy-repe
 \label{fig:accuracy-repeatability}
 \end{figure}
 
-Both the encoder angle (from the telemetry UART, used directly by the control algorithm) and the independent resolver angle are used to evaluate these metrics. Before any comparison, the constant zero-reference offset between the two sensors must be isolated, since the encoder and resolver do not share the same zero angle. This offset is illustrated in Figure~\ref{fig:encoder-resolver-offset}.
+Both the encoder angle (from the telemetry UART, used directly by the control algorithm) and the independent resolver angle are used to evaluate these metrics. However, before any comparison is attempted, the constant zero-reference offset between the two sensors must be isolated, since the encoder and resolver do not share the same zero angle. This offset is illustrated in Figure~\ref{fig:encoder-resolver-offset}.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth,keepaspectratio]{05_SystemLevelTestBench/images/Encoder_Resolver_Offset.pdf}
-\caption{The constant angular offset between encoder and resolver readings, arising from their independent zero reference calibration.}
+\caption{The constant angular offset between encoder and resolver readings due to their different interpretation of $0^\circ$.}
 \label{fig:encoder-resolver-offset}
 \end{figure}
 
-The encoder angle represents the accuracy of the closed-loop controller, since it is the quantity the firmware attempts to drive to the commanded value. The resolver provides an independent ground truth to validate those results. The commanded sequence used across all tests is $[0, 90, 180, 270]^\circ$.
+In practice, the encoder angle represents the accuracy of the closed-loop controller, since it is the quantity the firmware attempts to drive to the commanded value. The resolver provides an independent ground truth to validate those results. Repeatability is derived from the resolver data rather than the encoder, since the encoder is part of the DUT while resolver is the trustworthy golden reference.
 
-\subsubsection*{Command Sequence and Angular Quantisation}
+\subsubsection*{Commanded Angles and Quantization Error Derivation}
 
-The demo drives the rotor to four absolute target angles, issued in firmware as integer milliradians,
+The demo that runs during radiation tests is set to drive the rotor to four absolute target angles, issued in firmware in mrad,
 
-\begin{equation}
-c_k \in \{0,\,1571,\,3141,\,4712\}~\si{\milli\radian}, \qquad k = 0,1,2,3.
-\end{equation}
+\begin{equation*}
+    c_k \in \{0,\,1571,\,3141,\,4712\}~\si{\milli\radian}, \qquad k = 0,1,2,3.
+\end{equation*}
 
 Because the targets are absolute rather than incremental, the positioning error does not accumulate from cycle to cycle. Converting to degrees,
 
-\begin{equation}
-\theta_{\mathrm{cmd}}^{(k)} = \frac{180^\circ}{\pi}\,\frac{c_k}{1000},
-\end{equation}
+\begin{equation*}
+    \theta_{\mathrm{cmd}}^{(k)} = \frac{180^\circ}{\pi}\,\frac{c_k}{1000},
+\end{equation*}
 
-gives a command resolution of $1~\si{\milli\radian} = 0.0573^\circ$. The realised targets are therefore $0^\circ$, $90.012^\circ$, $179.966^\circ$ and $269.978^\circ$, deviating from the nominal $[0,90,180,270]^\circ$ by at most $0.034^\circ$. This quantisation is a fixed, dose-independent contribution, roughly an order of magnitude below the measured positioning error, and is removed from the analysis by referencing every error to the realised $\theta_{\mathrm{cmd}}^{(k)}$ rather than to the nominal angle.
+gives a command resolution of $1~\si{\milli\radian} = 0.0573^\circ$. Therefore, the real target angles that the encoder accepts are $0^\circ$, $90.012^\circ$, $179.966^\circ$ and $269.978^\circ$.
 
-\subsubsection*{Offset Removal}
+This command-level quantization is independent of the quantization introduced by the encoder's own 14-bit raw output, discussed in Subsection~\ref{subsec:expected-accuracy-repeatability}, which instead limits the resolution at which the settled rotor position can be read back rather than the resolution of the commanded target.
 
-The encoder and the resolver do not share a zero reference, so a constant offset must be isolated before any comparison (Figure~\ref{fig:encoder-resolver-offset}). Working modulo a full turn, the smallest signed difference between two angles is written with the wrapping operator
-
-\begin{equation}
-\operatorname{wrap}(x) = \big[(x + 180^\circ)\bmod 360^\circ\big] - 180^\circ \;\in\; (-180^\circ,\,180^\circ].
-\end{equation}
-
-Each encoder sample is matched to the temporally nearest resolver sample (within a tolerance of \SI{0.5}{\second}), yielding pairs $(\theta^{\mathrm{enc}}_i,\theta^{\mathrm{res}}_i)$. The constant offset is taken as the median of their signed difference, which is robust to the occasional transient mismatch,
-
-\begin{equation}
-\Delta\theta_0 = \operatorname*{median}_i \operatorname{wrap}\!\big(\theta^{\mathrm{res}}_i - \theta^{\mathrm{enc}}_i\big).
-\end{equation}
-
-The dispersion of the same quantity, expressed as the median absolute deviation,
-
-\begin{equation}
-\mathrm{MAD} = \operatorname*{median}_i \big|\operatorname{wrap}(\theta^{\mathrm{res}}_i-\theta^{\mathrm{enc}}_i) - \Delta\theta_0\big|,
-\end{equation}
-
-serves as a direct test of whether the offset is truly constant: a small, dose-invariant MAD confirms that the two zero references are simply shifted and that neither sensor decalibrates under irradiation.
-
-To express the accuracy with respect to the firmware command, each sensor is referenced to the command frame by a single constant zero, calibrated only on settled samples acquired before significant dose has accumulated (low-dose baseline, $\mathrm{TID} < \SI{60}{\gray}$),
-
-\begin{align}
-\beta_{\mathrm{enc}} &= \operatorname*{median} \operatorname{wrap}\!\big(\theta_{\mathrm{cmd}} - \theta^{\mathrm{enc}}\big), & \beta_{\mathrm{res}} &= \operatorname*{median} \operatorname{wrap}\!\big(\theta_{\mathrm{cmd}} - \theta^{\mathrm{res}}\big).
-\end{align}
-
-\subsubsection*{Positioning Error Decomposition}
-
-Using the motion segmentation of Section~\ref{subsec:motion-segmentation}, the analysis is restricted to the settled intervals $\mathcal{S}_j$. Each settled interval is reduced to a single circular-mean angle,
-
-\begin{equation}
-\bar{\theta}_j = \operatorname{atan2}\!\left(\textstyle\sum_{i\in\mathcal{S}_j}\sin\theta_i,\; \textstyle\sum_{i\in\mathcal{S}_j}\cos\theta_i\right),
-\end{equation}
-
-computed separately for the resolver and the encoder. Let $\theta_{\mathrm{cmd}}(j)$ be the target associated with interval $j$. The positioning error is then decomposed into three terms, all in the command frame,
-
-\begin{align}
-e_j^{\mathrm{true}} &= \operatorname{wrap}\!\big(\bar{\theta}^{\mathrm{res}}_j + \beta_{\mathrm{res}} - \theta_{\mathrm{cmd}}(j)\big), \label{eq:e-true}\\[2pt]
-e_j^{\mathrm{ctrl}} &= \operatorname{wrap}\!\big(\bar{\theta}^{\mathrm{enc}}_j + \beta_{\mathrm{enc}} - \theta_{\mathrm{cmd}}(j)\big), \label{eq:e-ctrl}\\[2pt]
-e_j^{\mathrm{sens}} &= e_j^{\mathrm{true}} - e_j^{\mathrm{ctrl}}. \label{eq:e-sens}
-\end{align}
-
-Here $e^{\mathrm{ctrl}}$ is the controller error: the loop driving the encoder to its target, evaluated against the very sensor it closes on. It is necessary but not sufficient, because it is blind to any error of that sensor. $e^{\mathrm{true}}$ is the true positioning error, measured by the independent resolver; it is the trustworthy figure and the only one capable of revealing a radiation-induced sensor error. Their difference $e^{\mathrm{sens}}$ isolates the encoder's own error. The accuracy is summarised per setpoint by the mean bias and the mean absolute, RMS, $95^{\text{th}}$-percentile and maximum of $|e^{\mathrm{true}}|$.
-
-As an offset-free check that requires no zero reference, the spacing of the settled resolver levels $L_k$ is compared with the commanded $90^\circ$ step,
-
-\begin{equation}
-\Delta_k = \operatorname{wrap}\!\big(L_{k+1} - L_k\big), \qquad \textstyle\sum_k \Delta_k = 360^\circ,
-\end{equation}
-
-and any dose dependence is quantified by the slope of $e^{\mathrm{true}}$ versus TID (ordinary least squares, with a $95\%$ confidence interval) together with the difference between the low- and high-dose means.
-
-\subsection{Expected Sensor-Level Accuracy and Repeatability}
+\subsection{Estimated Sensor Accuracy and Repeatability}
 \label{subsec:expected-accuracy-repeatability}
-
-Before interpreting the irradiation results, it is useful to establish the baseline performance that the AS5047P can provide independently of any radiation effect. This defines the floor against which any dose-induced degradation must be judged: a change is only attributable to radiation if it exceeds the intrinsic sensor budget summarised below \cite{as5047p_datasheet}.
-
-The relevant device parameters for a static positioning application are listed in Table~\ref{tab:as5047p-specs}. Since the rotor is evaluated only at its settled setpoints, the dynamic angle error terms are not applicable and are omitted.
+Before making any claims on the accuracy and repeatability results of the tests, it is important to determine the baseline accuracy the sensor can deliver independently of any radiation effect. The relevant accuracy-related parameters reported in the sensor's datasheet~\cite{as5047p_datasheet} are summarized in Table~\ref{tab:as5047p-specs}.
 
 \begin{table}[H]
-\centering
-\caption{AS5047P parameters relevant to static positioning.}
-\label{tab:as5047p-specs}
-\begin{tabular}{lcc}
-\toprule
-Parameter & Value & Note \\
-\midrule
-Core resolution & \SI{14}{bit} & \SI{0.022}{\degree}/LSB \\
-Quantisation noise (RMS) & \SI{0.0063}{\degree} & LSB$/\sqrt{12}$ \\
-Output noise, $1\sigma$ & \SI{0.068}{\degree} & DAEC enabled \\
-INL, optimum placement @\SI{25}{\celsius} & $\pm\SI{0.8}{\degree}$ & \\
-INL, optimum placement, full temp. & $\pm\SI{1.0}{\degree}$ & \\
-INL, with magnet displacement + temp. & $\pm\SI{1.2}{\degree}$ & \SI{500}{\micro\metre} offset \\
-Required field strength $B_z$ & \SIrange{35}{70}{\milli\tesla} & validity bound \\
-\bottomrule
-\end{tabular}
+    \centering
+    \arrayrulecolor{thesisblue}
+    \renewcommand{\arraystretch}{1.25}
+    \setlength{\tabcolsep}{8pt}
+    \begin{tabular}{
+        >{\centering\arraybackslash}m{7.5cm}
+        >{\centering\arraybackslash}m{4.5cm}
+    }
+        \rowcolor{thesisblue}
+        \textcolor{white}{\textbf{Parameter}} &
+        \textcolor{white}{\textbf{Value}} \\
+        \hline
+        \rowcolor{thesislightgray}
+        Core resolution (SPI) &
+        \SI{14}{bit} \\
+        Quantization noise (RMS), \cite{kester_mt001} &
+        \SI{0.0063}{\degree} \\
+        \rowcolor{thesislightgray}
+        Output noise, $1\sigma$ &
+        \SI{0.068}{\degree} \\
+        INL, optimum placement @\SI{25}{\celsius} &
+        $\pm\SI{0.8}{\degree}$ \\
+        \rowcolor{thesislightgray}
+        INL, optimum placement, full temp. &
+        $\pm\SI{1.0}{\degree}$ \\
+        INL, with magnet displacement + temp. &
+        $\pm\SI{1.2}{\degree}$ \\
+        \rowcolor{thesislightgray}
+        Required field strength $B_z$ &
+        \SIrange{35}{70}{\milli\tesla} \\
+        \hline
+    \end{tabular}
+    \caption{Factors that affect the accuracy of the AS5047P.}
+    \label{tab:as5047p-specs}
+    \arrayrulecolor{black}
 \end{table}
 
-Two test-specific conditions shift the expectation toward the conservative end of these ranges:
+Of these, accuracy is bounded by the non-linearity terms (INL), since they represent a systematic, repeatable bias, while repeatability is bounded by the output-noise term, since it reflects random sample-to-sample scatter rather than a fixed offset. Note that for many encoders, repeatability is not given as a separate specification and is instead folded into a single accuracy figure~\cite{rls_encoder_handbook}. The AS5047P datasheet is more granular in this respect, reporting non-linearity and output noise as two distinct parameters, which is what makes it possible to budget the two metrics separately in what follows.
 
-\begin{itemize}
-\item \textbf{DAEC enabled.} The Dynamic Angle Error Compensation was left active in all tests. The datasheet notes that disabling it benefits static positioning by reducing RMS noise; with it enabled, the repeatability floor is set by the full \SI{0.068}{\degree} ($1\sigma$) figure.
-\item \textbf{Magnet placement tolerance.} The magnet is held above the IC by a 3D-printed structure, whose layer and dimensional tolerances introduce an uncontrolled $x$, $y$, $z$ offset between the magnet and the die. The angle error therefore follows the displacement case ($\pm\SI{1.2}{\degree}$) rather than the optimum-placement case ($\pm\SI{0.8}{\degree}$).
-\end{itemize}
+INL captures the angular error introduced by imperfect alignment between the magnet and the IC, and is the dominant contributor to the accuracy budget, roughly an order of magnitude larger than either the quantization or output-noise terms~\cite{as5047p_datasheet} (note that ams's product overview separately quotes a typical, condition-unspecified accuracy of \SI{0.5}{\degree}~\cite{as5047p_product_page}, which is not directly comparable to the worst-case INL bound used here). Since the magnet holder is produced by 3D printing or CNC machining, dimensional tolerances on the x, y, and z axes introduce an uncontrolled offset between the magnet and the die, placing the relevant figure closer to the displacement case than to the optimum-placement case~\cite{as5047p_datasheet}.
 
-After removing the constant encoder--resolver zero offset (Figure~\ref{fig:encoder-resolver-offset}), the residual per-setpoint accuracy is bounded by the INL, while repeatability is bounded by the output noise. The resulting pre-irradiation expectation is summarised in Table~\ref{tab:expected-budget}.
-
-\begin{table}[H]
-\centering
-\caption{A-priori sensor budget for this test (DAEC enabled, printed mount).}
-\label{tab:expected-budget}
-\begin{tabular}{lcc}
-\toprule
-Metric & Expected ($1\sigma$) & Expected ($3\sigma$ / envelope) \\
-\midrule
-Repeatability & \SI{0.068}{\degree} & $\approx \SI{0.20}{\degree}$ \\
-Accuracy (after offset removal) & --- & up to $\pm\SI{1.2}{\degree}$ \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-These values represent the baseline floor only. The AS5047P is a commercial part with no radiation specification, so none of them are guaranteed under irradiation. The objective of the tests is therefore to verify whether the accumulated dose drives any of these terms beyond their nominal bound.
+DAEC was enabled throughout all tests; it compensates for the dynamic angle error caused by signal propagation delay at high rotational speed, and since this error is zero at standstill, it has no effect on the settled-position measurements used in this evaluation~\cite{as5047p_daec_appnote}.

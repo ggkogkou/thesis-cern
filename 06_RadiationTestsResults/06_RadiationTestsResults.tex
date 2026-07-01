@@ -1,263 +1,374 @@
 \chapter{System-Level Radiation Tests and Results}
 \label{chapter:rad-tests-results}
 
-This chapter presents and analyzes the system-level irradiation tests conducted at the CHARM and CC60 facilities. Tests that did not yield significant observations are documented in the appendices. The radiation characterization of the magnetic encoder, having been covered separately, is not repeated here.
+This chapter presents and analyzes the system-level irradiation tests conducted at the CHARM and CC60 facilities. Rather than presenting all test runs, the focus is placed selectively on those that yielded important observations.
 
-All tests use the same demonstration position control implemented in firmware, in which a Timer/Counter commands a successive rotation of 90\textdegree{} at fixed time intervals, as described in Chapter~\ref{subsection:test-facilities-requirements}. The test bench is the same across all facilities, as described in the previous chapter.
+All discussed tests utilized a similar positioning test sequence, where four different angles were commanded cyclically and sequentially to evaluate performance under irradiation.
 
-\section{Pre-Irradiation System Performance}
+\section{\texorpdfstring{$^{60}$Co}{60Co} Irradiation Tests}
+\label{sec:cc60-revised}
 
-\section{CHARM Test of the Initial Prototype}
+\subsection{L6498D Gate Drivers}
+\label{subsection:l6498d-cc60-results}
 
-This test took place at the CHARM facility in the overhead position. For this, the DUT was mounted on the conveyor as demonstrated in the following pictures.
+The irradiation test was carried out at the CC60 facility using a Cobalt-60 source. For the purposes of the test, the motor setup was mounted on a frame in front of the radiation source, placed on a movable table at a specific distance that calibrates the dose rate at \SI{30}{Gy/h}.
 
-This test proves very useful because it we have the chance to evaluate the system to SEE. The most sensitive component to SEE is the MCU and thus it is very useful to document the errors and calculate the cross-section between this and other tests. The system failed due to the gate drivers, and this failure was also verified in a cobalt test as will be presented in section \ref{sec:cc60-l6498d}.
+As shown in Figure~\ref{fig:cc60-revised}, the PCB was irradiated from the bottom side of the setup. This orientation was selected so that the aluminium structure and the motor would not shield part of the board from the incoming $\gamma$-ray irradiation.
 
-\section{$^{60}$Co Irradiation Test of the Revised System}
-\label{sec:cc60-l6498d}
-
-The irradiation test was carried out at the CC60 facility using a Cobalt-60 source. For the purposes of the test, the motor setup was mounted on a frame in front of the radiation source, placed on a movable table at a specific distance that calibrates the dose rate. As shown in Figure~\ref{fig:cc60-revised}, the PCB was irradiated from the bottom side of the setup. This orientation was selected so that the aluminium structure and the motor would not shield part of the board from the incoming $\gamma$-radiation.
-
-% \begin{figure}[H]
-%   \centering
-%   \includegraphics[width=0.8\textwidth,keepaspectratio]{06_RadiationTestsResults/images/System-Revised-CC60.JPG}
-%   \caption{Image from the test setup before irradiation at CC60 facility}
-%   \label{fig:cc60-revised}
-% \end{figure}
-
-For this test the dose rate was calibrated at 30 Gy/h. The system showed an unexpectedly quick degradation that lead it to permanent failure at a much lower TID than the initial target of 500 Gy.
-
-The new testing procedures with the split voltage rails helped a lot to visualize how the components behaved during this test.
-
-The test was driven to premature failure and failed to meet the target of 500 Gy. The point of failure is found at that many gray.
-
-
-
-
-\section{$^{60}$Co Irradiation Test with NCP5183 Gate Drivers}
-
-This test was performed two days after the previously described irradiation test and followed an almost identical procedure. The main difference was the replacement of the gate drivers with NCP5183 devices. After this modification, the setup remained fully functional up to an accumulated dose of 650 Gy. This value exceeded the initial expectations based on the estimated MCU tolerance and satisfied the initial target dose of 500 Gy.
-
-An important objective of this test was to identify the accumulated dose at which the system began to lose controllability. For this purpose, the change in average current consumption was evaluated using a moving average over a 30 Gy dose window.
-
-\subsection{Effects of TID on Components}
-
-The effects of TID on the system components are evaluated in terms of current consumption, as shown in Figure~\ref{fig:cc60-ncp-currents}.
+The system was irradiated up to \SI{500}{Gy} and showcased two distinct failure modes: \textit{i) complete motion breakdown due to the failure of the L6498D gate drivers}, and \textit{ii) external watchdog timer (WDT) breakdown}. These failure modes were determined through a combination of resolver measurements and current consumption logs derived from the power supply unit (PSU).
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.82\textwidth,keepaspectratio]{06_RadiationTestsResults/cc60-ncp5183/Current_5V_Rail.pdf}
-  \caption{Current consumption of the 5 V digital-logic rail during TID irradiation.}
-  \label{fig:cc60-ncp-current-5v}
+  \includegraphics[width=0.8\textwidth,keepaspectratio]{06_RadiationTestsResults/images/System-Revised-CC60.JPG}
+  \caption{The test setup mounted on the moving table of CC60 facility, with the metallic structure facing outwards to avoid accidental shielding of one fraction of the DUT.}
+  \label{fig:cc60-revised}
 \end{figure}
+
+\subsubsection*{Failures Identification}
+
+Firstly, the permanent loss of control is very easy to identify from the resolver's position data. In that regard, Figure~\ref{fig:l6498d-resolver} serves a dual purpose. Firstly, it is used to identify the moment where the control is visibly lost, and secondly, visualize the theory behind the classification of position samples, onto settled and transient, that was developed during Subsection~\ref{subsection:position-samples-characterization} of Chapter~\ref{chapter:test-bench-design}.
+
+More specifically, the shaded areas represent the samples that their velocity is below the threshold for them to be considered as settled. Furthermore, in the same figure, the permanent failure of the system is identified at approximately \SI{312.56}{Gy}; however, taking into account the currents from the motor power supply (see Figure~\ref{fig:l6498d-20v}), the first jitter appeared at \SI{312.4}{Gy}, which is set as the actual failing point.
 
 \begin{figure}[H]
-  \centering
-  \includegraphics[width=0.82\textwidth,keepaspectratio]{06_RadiationTestsResults/cc60-ncp5183/Current_12V_Rail.pdf}
-  \caption{Current consumption of the 12 V gate-driver and voltage-reference rail during TID irradiation.}
-  \label{fig:cc60-ncp-current-12v}
+    \centering
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{06_RadiationTestsResults/images-l6498d/resolver_zoomed_position.pdf}
+    \end{subfigure}
+    \vspace{0.5cm}
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{06_RadiationTestsResults/images-l6498d/resolver_zoomed_velocity.pdf}
+    \end{subfigure}
+    \caption[Resolver position and velocity during irradiation failure.]{Resolver position (top) and velocity (bottom) measurements zoomed around the failure point. The plots show the first jitter occurring at \SI{312.4}{Gy} right before the control is completely lost.}
+    \label{fig:l6498d-resolver}
 \end{figure}
+
+Monitoring the system's voltage rails proved highly effective for isolating and identifying these failures. Regarding the first, more straightforward failure, Figure~\ref{fig:l6498d-5v} illustrates the current consumption of the \SI{5}{V} rail supplying the MCU. A sudden, sharp drop is immediately apparent, falling from a consistent mean of \SIrange{23}{24}{\milli\ampere} down to approximately \SIrange{11}{12}{\milli\ampere}. This behavior is attributed to a permanent failure of the external WDT (TPL5010); upon failing, it latched the active-low $\overline{\text{RST}}$ pin of the MCU to a low state, thereby forcing the MCU into a continuous reset, non-operational state. This specific failure was observed at an accumulated dose of approximately \SI{414.66}{Gy}.
 
 \begin{figure}[H]
-  \centering
-  \includegraphics[width=0.82\textwidth,keepaspectratio]{06_RadiationTestsResults/cc60-ncp5183/Current_20V_Rail.pdf}
-  \caption{Current consumption of the 20 V motor-phase rail during TID irradiation.}
-  \label{fig:cc60-ncp-current-20v}
+    \centering
+    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/images-l6498d/current_5v_rail.pdf}
+    \caption{Current consumption of the \SI{5}{V} rail, showing the distinct drop in current caused by the permanent failure of the external WDT.}
+    \label{fig:l6498d-5v}
 \end{figure}
 
-The current consumption of the 5 V rail remained very stable throughout the irradiation test. In contrast, the 12 V rail, which supplies the voltage reference and gate drivers, exhibited a significant increase after an accumulated dose of approximately 300 Gy. Additional discrete increases were observed at approximately 500 Gy and 550 Gy.
+Following this, Figure~\ref{fig:l6498d-12v} depicts the current consumption of the \SI{12}{V} power rail. As discussed in Section~\ref{subsec:pcb-iter-2}, this rail supplies power to the three L6498D gate drivers and a single voltage reference. The filtered trend (represented by the blue moving average line) shows a significant, steady rise in current consumption up to a critical point. Beyond this threshold, as evidenced by the gray raw measurements, the rail experiences severe, erratic current spikes. This behavior directly correlates with the progressive degradation of the gate drivers, culminating in the complete breakdown of the motor control stage. After the failure point, the current continues to increase to the end of the full irradiation cycle, where it showcased an increase of \SI{740}{\percent}.
 
-The current consumption of the 20 V motor supply remained well regulated during the irradiation run. However, discrete increases were observed during the same dose intervals as those seen on the 12 V rail, suggesting a possible correlation between the two effects. Since the motor was tested without mechanical load and the measured currents remained very low, no firm conclusion can be drawn regarding the behaviour of the system under higher-load operating conditions.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/images-l6498d/current_12v_rail.pdf}
+    \caption[Current consumption of the \SI{12}{V} rail during irradiation.]{Current consumption of the \SI{12}{V} rail, showing a rising moving average (blue) and erratic transient spikes (gray) prior to gate driver failure.}
+    \label{fig:l6498d-12v}
+\end{figure}
 
-A summary of the degradation in current consumption is provided in Table~\ref{tab:cc60-ncp-current-statistics}.
+As an interesting point of comparison, Figure~\ref{fig:l6498d-20v} provides an insight into the current spikes experienced on the \SI{20}{V} motor power rail. Because a moving average filter would mask these rapid transients, the blue line represents the raw, unfiltered measurements. Severe current spikes are observed, some of which reach the overcurrent limit of the PSU. This behavior provides a direct indication of shoot-through events occurring in the half-bridges of the inverter. Notably, the period where these spikes on the motor supply rail happen matches the period of the gate driver spikes perfectly.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/images-l6498d/current_20v_rail_zoomed.pdf}
+    \caption[Current consumption of the \SI{20}{V} motor rail during irradiation.]{Current consumption of the \SI{20}{V} motor rail. The raw measurements (blue) show severe transient spikes reaching the PSU current limit, indicating half-bridge cross-conducting.}
+    \label{fig:l6498d-20v}
+\end{figure}
+
+Therefore, for further analysis of TID effects on the control performance, the \SI{312.54}{Gy} threshold is taken as the ceiling, after which the control is considered lost and the system permanently damaged. Moreover, after inspection of the irradiated system, it appeared that all three gate drivers were damaged.
+
+\subsubsection*{Repeatability During Irradiation}
+
+The data post-processing and analysis are performed as discussed in Chapter~\ref{chapter:test-bench-design} and Subsection~\ref{subsection:data-post-processing}. For this specific test, the repeatability based on the resolver samples is evaluated. Further insights into the system performance are provided for the successful test run, which is described in Subsection~\ref{subsection:ncp5183-cc60-results}. Regarding the visualization of repeatability, dose windows of \SI{20}{\gray} were utilized with a step of \SI{50}{\gray}.
+
+In Figure~\ref{fig:l6498d-repeatability-1-2}, the violin plots of the evaluated samples are presented. The evaluation of the repeatability is performed locally at every \SI{50}{\gray}, and a global representation is ultimately created that incorporates all the positions across the entire irradiation run. Violin plots are highly useful in this case since the distribution of the samples can be observed while still retaining the internal markers that provide the mean and standard deviation. As can be seen, the mean of the settled angles remains stable during the irradiation and is very close to the global mean. For instance, for Target Angle 1, the global mean is established at \SI{6.336}{\degree}, with the local window means drifting by less than \SI{0.05}{\degree} throughout the test. Furthermore, the shape of the distribution does not change significantly from a visual standpoint, which indicates that the repeatability remains consistent as the irradiation proceeds. Up to the point of failure, there is no drift in the mean, and the global repeatability distribution shows a very high concentration of samples toward the center.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/images-l6498d/repeatability_1.pdf}
+    \vspace{0.2cm}
+    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/images-l6498d/repeatability_2.pdf}
+    \caption[Repeatability analysis for target positions Angle 1 and Angle 2.]{Repeatability analysis for Angle 1 (top) and Angle 2 (bottom) under irradiation.}
+    \label{fig:l6498d-repeatability-1-2}
+\end{figure}
+
+Following the visual assessment of the motion to evaluate the positioning performance, the repeatability expressed as a $3\sigma$ standard deviation is analyzed, which covers \SI{99.73}{\percent} of the data distribution. In Figure~\ref{fig:l6498d-3s-plot}, the repeatability of each target angle is shown, and it can be seen that the values are consistent, with variations occurring only due to the algorithm's limitations for precise positioning. Across the entire run, the global $3\sigma$ repeatability for all positions remains strictly under \SI{0.50}{\degree}, except for a localized transient increase in Target Angle 2 during the \SIrange{50}{70}{\gray} window where it reaches \SI{0.582}{\degree}. With the red line, the pooled repeatability metric is plotted, which summarizes the repeatability of all four target angles combined. This line is very stable across the horizontal axis; as a result, no visible degradation due to TID effects is observed in the system.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/images-l6498d/three_sigma.pdf}
+    \caption{Repeatability expressed as $3\sigma$-plot for each target position along with the global (in red)}
+    \label{fig:l6498d-3s-plot}
+\end{figure}
+
+\subsection{NCP5183 Gate Drivers}
+\label{subsection:ncp5183-cc60-results}
+
+This test was performed two days after the previously described irradiation test and followed an identical procedure. The only difference was the replacement of the L6498D gate drivers with the NCP5183 ones.
+
+As a result, the setup remained fully functional up to an accumulated TID of approximately \SI{650}{\gray}, thus exceeding the initial TID target of \SI{500}{\gray} established in the thesis objectives (see Section~\ref{section:thesis-objectives} on page~\pageref{target:500gy-goal}).
+
+\subsubsection*{Failure Point Identification}
+
+Similarly to the process followed in Subsection~\ref{subsection:l6498d-cc60-results}, the failure point is derived from the resolver samples. In Figure~\ref{fig:ncp5183-resolver}, the system is observed to enter its failure state at approximately \SI{646.8}{\gray}. Past this point, erratic rotor movement is exhibited, characterized by significant noise, jitter, and vibration, before a complete failure mode is ultimately entered.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/images-ncp5183/resolver_zoomed_position.pdf}
+    \caption{Resolver tracking data indicating rotor position degradation prior to failure.}
+    \label{fig:ncp5183-resolver}
+\end{figure}
+
+Since the external WDT IC was removed for this test, the MCU remained fully functional up to the point of failure. However, in Figure~\ref{fig:ncp5183-5v}, some small sudden spikes are observed for the first time during the irradiation run. These spikes correspond exactly to the identified failure threshold time; however, they cannot be definitively attributed to a specific component as multiple devices reside on that rail. In any case, the SAMD21 MCU reached its expected TID radiation tolerance limits.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/images-ncp5183/current_5v_rail.pdf}
+    \caption{Current consumption of the \SI{5}{V} rail.}
+    \label{fig:ncp5183-5v}
+\end{figure}
+
+The NCP5183 gate drivers proved to be significantly more robust under irradiation. However, as depicted in Figure~\ref{fig:ncp5183-12v}, an increasing trend in current consumption is observed, and at the point of failure, the current profile experiences extreme jitter that can be attributed to the gate drivers.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/images-ncp5183/current_12v_rail.pdf}
+    \caption[Current consumption of the \SI{12}{V} rail during irradiation.]{Current consumption of the \SI{12}{V} rail, showing a rising moving average (blue) and erratic transient spikes (gray) prior to gate driver failure.}
+    \label{fig:ncp5183-12v}
+\end{figure}
+
+The system exceeded the \SI{500}{\gray} lifetime target under the $^{60}$Co irradiation; however, its performance is evaluated across the entire irradiation run up to the point of identified failure.
+
+\subsubsection*{Repeatability During Irradiation}
+
+In this subsection, the target positions are discussed sequentially. In Figure~\ref{fig:ncp5183-repeatability-1-2}, the violin plots demonstrate that the settled positions remain closely clustered around the target baseline. Furthermore, these results are summarized quantitatively in Table~\ref{tab:repeatability-angle1}.
+
+Regarding the localized repeatability tests for Target Position 1, the mean value remains consistent and ranges between \SIrange{6.81}{6.90}{\degree} without displaying a monotonic ascending or descending trend. The $3\sigma$ metric varies between \SI{0.31}{\degree} and \SI{0.40}{\degree}, showing no significant structural shifts or upward trends. However, the first interval after the onset of irradiation exhibits the lowest variance, whereas the final interval prior to failure exhibits the highest. This statistical divergence is expected and is attributable to the sample size variations within each discrete dose window.
+
+Regarding the distribution of the entire irradiation run encompassing all samples, a high concentration toward the center is observed, with the global standard deviation and mean remaining consistent with those calculated for the localized windows. Therefore, a trend toward radiation-induced degradation does not appear to exist.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/images-ncp5183/repeatability_1.pdf}
+    \end{subfigure}
+    \vspace{0.3cm}
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/images-ncp5183/repeatability_2.pdf}
+    \end{subfigure}
+    \caption{Repeatability analysis and sample distribution for Target Position 1 under irradiation.}
+    \label{fig:ncp5183-repeatability-1-2}
+\end{figure}
+
+A similar analysis was performed for the remaining three target positions. For Target Position 2 (Figure~\ref{fig:ncp5183-repeatability-1-2}), the localized mean remains near \SI{96.42}{\degree}, while the $3\sigma$ precision metric ranges between \SI{0.3400}{\degree} and \SI{0.4738}{\degree}, marking it as the most volatile of the evaluated angles.
+
+As depicted in Figure~\ref{fig:ncp5183-repeatability-3-4}, Target Position 3 demonstrates the highest tracking precision, with its local $3\sigma$ metric dropping to \SI{0.2630}{\degree} during the \SIrange{300}{320}{\gray} window and maintaining an exceptionally stable global mean of \SI{185.9010}{\degree}.
+
+Finally, Target Position 4 maintains an average settled angle of \SI{276.3681}{\degree}, with its local $3\sigma$ repeatability tightly bounded between \SI{0.3046}{\degree} and \SI{0.3940}{\degree}.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/images-ncp5183/repeatability_3.pdf}
+    \end{subfigure}
+    \vspace{0.3cm}
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/images-ncp5183/repeatability_4.pdf}
+    \end{subfigure}
+    \caption{Repeatability analysis and sample distribution for Target Positions 3 and 4 under irradiation.}
+    \label{fig:ncp5183-repeatability-3-4}
+\end{figure}
+
+Figure~\ref{fig:ncp5183-3s} illustrates the local $3\sigma$ repeatability for each target position along with the pooled system baseline across the cumulative total ionizing dose. The pooled $3\sigma$ (solid red line) remains flat, fluctuating slightly between \SI{0.33}{\degree} and \SI{0.39}{\degree}. Neither increasing nor decreasing trend is visible in any of the positions up to the final TID window at \SI{626.3}{\gray}. Target Position 2 consistently tracks at the highest dispersion, peaking at \SI{0.4738}{\degree}, while Target Position 3 maintains the lowest dispersion, as low as \SI{0.2630}{\degree}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/images-ncp5183/three_sigma.pdf}
+    \caption{Local $3\sigma$ positioning repeatability and pooled system baseline as a function of cumulative total ionizing dose.}
+    \label{fig:ncp5183-3s}
+\end{figure}
+
+\subsubsection*{Repeatability of the Encoder}
+
+An interesting point is the evaluation of the repeatability of the magnetic encoder, which is itself part of the system under test. Figure~\ref{fig:ncp5183-enc-3s} depicts the $3\sigma$ standard deviations for each target angle, together with the pooled standard deviation. In addition, the gray horizontal line represents the global standard deviation. These diagrams indicate that the rotor reaches each position with a repeatability of less than \SI{0.4}{\degree}. The localized pooled standard deviation follows the global standard deviation almost perfectly, verifying that there is no significant drift in either the mean or the spectrum of the convergence.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/images-ncp5183/enc_three_sigma.pdf}
+    \caption{Localized and global $3\sigma$ positioning repeatability of the magnetic encoder and pooled system baseline as a function of cumulative TID.}
+    \label{fig:ncp5183-enc-3s}
+\end{figure}
+
+\subsection*{Conclusions}
+\label{subsec:cc60-conclusions}
+
+A comparison between Figure~\ref{fig:ncp5183-enc-3s} and Figure~\ref{fig:ncp5183-3s} shows that they are almost identical, indicating that the encoder exhibits deterministic behavior. Neither the L6498D nor the NCP5183 test revealed any measurable degradation in positioning repeatability attributable to TID effects. In both cases, the system maintained consistent repeatability across all target positions throughout the entire irradiation run, up to the respective points of failure.
+
+The observed position-dependent variability in repeatability is more likely related to encoder--magnet misalignment or an excessive distance between the magnet and the encoder. Due to a manufacturing error during the CNC machining of the test bench, the magnet was positioned slightly farther from the sensor than originally designed. Given this mechanical misalignment, the results are considered consistent and do not indicate any radiation-induced degradation.
+
+Moreover, since the system runs FOC, it relies heavily on PI controllers: two for the $dq$ currents, one for the velocity, and one proportional controller for the position. These controllers were not optimally tuned, and thus the system is expected to exhibit limited positioning performance independently of radiation effects. Therefore, it can be safely concluded that the system's performance is limited primarily by mechanical and control factors rather than radiation-induced degradation.
+
+\section{Mixed-Field Irradiation Tests}
+\label{section:charm-tests}
+
+System-level tests were also performed at the CHARM mixed-field facility, utilizing the first iteration of the system with the L6498D gate drivers, prior to the $^{60}$Co tests of Section~\ref{sec:cc60-revised}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth,keepaspectratio]{06_RadiationTestsResults/images/overhead-old-2.jpg}
+    \caption{The first system design iteration mounted on the panels of the overhead conveyor inside CHARM. Before beam restarts, the conveyor is moved back further inside the irradiation room through the rails installed on the ceiling.}
+    \label{fig:overhead-old}
+\end{figure}
+
+\subsection{First Radiation Test}
+\label{subsection:charm-1}
+
+The first trial was placed in the overhead position at CHARM for one full irradiation week, after which it suffered a mechanical failure rather than an electrical one. As a result, this test is not considered for the assessment of TID or displacement damage degradation. It is, however, analyzed for the MCU SEEs it produced, as it serves as a reference point for the SEE cross-sections against which the fault mitigation techniques implemented in the second test can be evaluated.
+
+A total of 21 Control Corruption events and 38 MCU SEFI events were recorded up to the point of mechanical failure, at a total accumulated fluence of \SI{3.06e11}{\per\cm\squared}~HEH, a TID of \SI{109.2}{\gray}, and a displacement damage dose of \SI{1.41e12}{\per\cm\squared} (1\,MeV\,$n_\text{eq}$). The resulting cross-sections and their 95\% confidence level Poisson upper limits are summarized in Table~\ref{tab:cross-sections-charm-1}.
 
 \begin{table}[H]
-  \centering
-  \begin{tabular}{lccccc}
-        \toprule
-        Rail & Minimum (A) & Maximum (A) & Starting (A) & Final (A) & Change (\%) \\
-        \midrule
-        5 V & 0.0233 & 0.0239 & 0.0237 & 0.0236 & -0.42 \\
-        12 V & 0.0070 & 0.0142 & 0.0074 & 0.0140 & 89.15 \\
-        20 V & 0.0026 & 0.0166 & 0.0029 & 0.0070 & 144.50 \\
-        \bottomrule
+    \centering
+    \arrayrulecolor{thesisblue}
+    \renewcommand{\arraystretch}{1.25}
+    \setlength{\tabcolsep}{8pt}
+    \begin{tabular}{
+        >{\centering\arraybackslash}m{3.4cm}
+        >{\centering\arraybackslash}m{1.0cm}
+        >{\centering\arraybackslash}m{3.2cm}
+        >{\centering\arraybackslash}m{2.4cm}
+        >{\centering\arraybackslash}m{2.4cm}
+    }
+        \rowcolor{thesisblue}
+        \textcolor{white}{\textbf{Event}} &
+        \textcolor{white}{\textbf{N}} &
+        \textcolor{white}{\textbf{HEH (\si{\per\centi\meter\squared})}} &
+        \textcolor{white}{\textbf{$\sigma$ (\si{\centi\meter\squared})}} &
+        \textcolor{white}{\textbf{$\sigma_{\mathrm{upper}}$ (\si{\centi\meter\squared})}} \\
+        \hline
+        \rowcolor{thesislightgray}
+        MCU SEFI &
+        38 &
+        \SI{3.06e11}{} &
+        \SI{1.24e-10}{} &
+        \SI{1.63e-10}{} \\
+        Control Corruption &
+        21 &
+        \SI{3.06e11}{} &
+        \SI{6.86e-11}{} &
+        \SI{9.88e-11}{} \\
+        \hline
     \end{tabular}
-    \caption{Current consumption statistics of the three voltage rails during irradiation.}
-    \label{tab:cc60-ncp-current-statistics}
+    \caption{Cross-sections for observed SEE events calculated from the first CHARM irradiation campaign.}
+    \label{tab:cross-sections-charm-1}
+    \arrayrulecolor{black}
 \end{table}
 
-\subsection{Repeatability Degradation Analysis over Time}
+\subsection{Second Radiation Test}
+\label{subsection:charm-2}
 
-Following the methodology described in subsection~\ref{subsection:model-accuracy-repeatability}, the repeatability of the measured rotor position was evaluated over the full irradiation cycle. The results are shown in Figure~\ref{fig:cc60-ncp-repeatability-local}.
+The second CHARM test campaign placed the same system in the overhead position for two irradiation weeks. This test provided significantly more insight into both the SEE behavior and the component-level degradation of the system.
 
-\begin{figure}[H]
-  \centering
+Permanent failure of the system was identified at a TID of \SI{234.7}{\gray}. Post-irradiation troubleshooting confirmed that all three L6498D gate drivers had failed and were no longer outputting PWM signals despite receiving them at their inputs. This finding is consistent with the $^{60}$Co results of Subsection~\ref{subsection:l6498d-cc60-results}, where the same components were identified as the weakest point of the system. Notably, the TID threshold at which failure occurred was significantly lower than in the $^{60}$Co test, which isolates pure TID effects. This reduction is attributed to the contribution of high-energy hadrons in the mixed-field environment, which appear to have accelerated device degradation through displacement damage.
 
-  \begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/cc60-ncp5183/_Repeatability_Boxplot_Angle_1_Local.pdf}
-  \end{minipage}
-  \hfill
-  \begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/cc60-ncp5183/_Repeatability_Boxplot_Angle_2_Local.pdf}
-  \end{minipage}
+At approximately \SI{97}{\gray}, the USART peripheral responsible for telemetry logging was permanently damaged and did not recover. The USART was operating at \SI{460800}{bps}, transmitting 44-byte payloads at approximately 10 frames per second. Since the software watchdog used USART activity as the primary indicator of MCU SEFI, cross-section calculations for both Control Corruption and MCU SEFI events are considered valid only up to this point. Beyond it, erroneous resolver motion served as the fallback reference for the software watchdog. It is also noted that this test included the software triple modular redundancy (TMR) as a fault mitigation technique.
 
-  \vspace{0.3cm}
-
-  \begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/cc60-ncp5183/_Repeatability_Boxplot_Angle_3_Local.pdf}
-  \end{minipage}
-  \hfill
-  \begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/cc60-ncp5183/_Repeatability_Boxplot_Angle_4_Local.pdf}
-  \end{minipage}
-
-  \caption{Repeatability analysis of the measured rotor position during irradiation for angles 1--4.}
-  \label{fig:cc60-ncp-repeatability-local}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/cc60-ncp5183/_Repeatability_Boxplot_Combined_Global.pdf}
-  \caption{Evolution of the TC4 interrupt period during irradiation. The trendline highlights the gradual decrease in the interrupt period as the accumulated dose increases.}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-
-  \begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/cc60-ncp5183/_Repeatability_Boxplot_Angle_1_Global.pdf}
-  \end{minipage}
-  \hfill
-  \begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/cc60-ncp5183/_Repeatability_Boxplot_Angle_2_Global.pdf}
-  \end{minipage}
-
-  \vspace{0.3cm}
-
-  \begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/cc60-ncp5183/_Repeatability_Boxplot_Angle_3_Global.pdf}
-  \end{minipage}
-  \hfill
-  \begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/cc60-ncp5183/_Repeatability_Boxplot_Angle_4_Global.pdf}
-  \end{minipage}
-
-  \caption{Repeatability analysis of the measured rotor position during irradiation for angles 1--4.}
-  \label{fig:cc60-ncp-repeatability-global}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-
-  \begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/cc60-ncp5183/_Repeatability_Ridgeline_Angle_1_Local.pdf}
-  \end{minipage}
-  \hfill
-  \begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/cc60-ncp5183/_Repeatability_Ridgeline_Angle_2_Local.pdf}
-  \end{minipage}
-
-  \vspace{0.3cm}
-
-  \begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/cc60-ncp5183/_Repeatability_Ridgeline_Angle_3_Local.pdf}
-  \end{minipage}
-  \hfill
-  \begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/cc60-ncp5183/_Repeatability_Ridgeline_Angle_4_Local.pdf}
-  \end{minipage}
-
-  \caption{Repeatability analysis of the measured rotor position during irradiation for angles 1--4 using local coordinates.}
-  \label{fig:cc60-ncp-repeatability-ridgeline-local}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-
-  \begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/cc60-ncp5183/_Repeatability_Ridgeline_Angle_1_Global.pdf}
-  \end{minipage}
-  \hfill
-  \begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/cc60-ncp5183/_Repeatability_Ridgeline_Angle_2_Global.pdf}
-  \end{minipage}
-
-  \vspace{0.3cm}
-
-  \begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/cc60-ncp5183/_Repeatability_Ridgeline_Angle_3_Global.pdf}
-  \end{minipage}
-  \hfill
-  \begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/cc60-ncp5183/_Repeatability_Ridgeline_Angle_4_Global.pdf}
-  \end{minipage}
-
-  \caption{Repeatability analysis of the measured rotor position during irradiation for angles 1--4 using global coordinates.}
-  \label{fig:cc60-ncp-repeatability-ridgeline-global}
-\end{figure}
-
-
-
-The position control performance of the system was evaluated across the full irradiation window from 0 to \SI{647}{\gray} through two complementary repeatability metrics.
-
-The first metric is the \textbf{local repeatability} that is defined as the cycle to cycle scatter of the settled resolver angles about the per-dose mean. That means that each \SI{50}{\gray} interval is treated independently for the settled angles. The circular standard deviation stayed withing \SIrange{0.10}{0.13}{\degree} for all four commanded angles and showed no significant trend with the accumulated dose.
-
-The second metric is the \textbf{global repeatability} which refers to the deviation between the settled angles across the whole irradiation period and the settled angle of the irradiation baseline of derived from the first \SI{60}{\gray} of data. The per-bin median drift remained within \SI{\pm 0.05}{\degree} across the full dose range, well within the intrinsic sensor noise floor and an order of magnitude below the AS5047P integral non-linearity of \SI{\pm 0.8}{\degree}. Thus, the conclusion is that there is no observed systematic drift but only control inaccuracies.
-
-These results are confirmed by three independent representations of the same data. The boxplots show constant box height (scatter) and median positions that remain on the zero reference throughout the irradiation. The ridgeline distributions show that the shape, width and center of the repeatability error distribution are preserved from \SI{25}{\gray} to \SI{625}{\gray}, with no progressive shift or broadening observable with increasing dose.
-
-The observed mild asymmetry of the repeatability distribution — with the peak sitting slightly positive relative to zero — is consistent across all dose levels and all angle states. It reflects a structural property of the motor settle dynamics (approach-direction asymmetry and cogging) rather than any radiation-induced effect, and is present from the first measurement bin at \SI{25}{\gray}. This indicates that, although the current consumption of the system increased during irradiation, the short-term repeatability of the rotor position measurement remained stable.
-
-\subsection{Accuracy Degradation Analysis over Time}
-
-\subsection{Degradation of Timer/Counter Accuracy over Time}
-
-During the degradation analysis, an additional timing-related effect was observed. When several motion periods were overlaid on the same time frame, the corresponding waveforms did not remain perfectly aligned. Instead, they gradually shifted apart as the irradiation dose increased. This indicated that the timing of the periodic interrupt responsible for updating the rotor position was not constant during the test.
-
-For this reason, the period of the TC4 interrupt was analyzed over the full irradiation cycle. The resulting trend is shown in Figure~\ref{fig:cc60-ncp-tc4}. The analysis shows that the interrupt period gradually decreased with accumulated dose, meaning that the interrupt was triggered slightly faster towards the end of the irradiation test.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/cc60-ncp5183/_TC4_Timer_Period_Stability_vs_TID.pdf}
-  \caption{Evolution of the TC4 interrupt period during irradiation. The trendline highlights the gradual decrease in the interrupt period as the accumulated dose increases.}
-  \label{fig:cc60-ncp-tc4}
-\end{figure}
-
-The numerical change in the TC4 interrupt period is summarized in Table~\ref{tab:cc60-ncp-tc4-period-summary}. The fitted trend corresponds to a total decrease of approximately 246.8~ms over the irradiation cycle, equal to a relative decrease of approximately 1.6\%.
+During the second CHARM irradiation campaign, a total of 11 Control Corruption events and 28 MCU SEFI events were recorded up to the loss of UART telemetry, at a total accumulated fluence of \SI{3.05e11}{\per\cm\squared}~HEH, a TID of \SI{108.6}{\gray}, and a displacement damage dose of \SI{1.55e12}{\per\cm\squared} (1\,MeV\,$n_\text{eq}$). The resulting cross-sections and their 95\% confidence level Poisson upper limits are summarized in Table~\ref{tab:cross-sections-charm-2}.
 
 \begin{table}[H]
-\centering
-\begin{tabular}{lcccc}
-    \toprule
-    & Initial Duration (s) & Final Duration (s) & Decrease (ms) & Decrease (\%) \\
-    \midrule
-    TC4 IRQ Period & 15.4460 & 15.1992 & 246.8 & 1.598 \\
-    \bottomrule
-\end{tabular}
-    \caption{Summary of the TC4 interrupt period drift during irradiation.}
-\label{tab:cc60-ncp-tc4-period-summary}
+    \centering
+    \arrayrulecolor{thesisblue}
+    \renewcommand{\arraystretch}{1.25}
+    \setlength{\tabcolsep}{8pt}
+    \begin{tabular}{
+        >{\centering\arraybackslash}m{3.4cm}
+        >{\centering\arraybackslash}m{1.0cm}
+        >{\centering\arraybackslash}m{3.2cm}
+        >{\centering\arraybackslash}m{2.4cm}
+        >{\centering\arraybackslash}m{2.4cm}
+    }
+        \rowcolor{thesisblue}
+        \textcolor{white}{\textbf{Event}} &
+        \textcolor{white}{\textbf{N}} &
+        \textcolor{white}{\textbf{HEH (\si{\per\centi\meter\squared})}} &
+        \textcolor{white}{\textbf{$\sigma$ (\si{\centi\meter\squared})}} &
+        \textcolor{white}{\textbf{$\sigma_{\mathrm{upper}}$ (\si{\centi\meter\squared})}} \\
+        \hline
+        \rowcolor{thesislightgray}
+        MCU SEFI &
+        28 &
+        \SI{3.05e11}{} &
+        \SI{9.19e-11}{} &
+        \SI{1.26e-10}{} \\
+        Control Corruption &
+        11 &
+        \SI{3.05e11}{} &
+        \SI{3.61e-11}{} &
+        \SI{5.62e-11}{} \\
+        \hline
+    \end{tabular}
+    \caption{Cross-sections for observed SEE events calculated from the second CHARM irradiation campaign.}
+    \label{tab:cross-sections-charm-2}
+    \arrayrulecolor{black}
 \end{table}
 
-Based on the firmware clock configuration, the TC4/TC5 peripheral clock is supplied by generic clock generator~2. This generator is configured from the DFLL48M clock source with a division factor of six, resulting in an expected TC4 generic clock of approximately 8~MHz. Therefore, the TC4 interrupt period is directly dependent on the DFLL48M-derived clock path.
+Table~\ref{tab:dd-tid-ratio-charm-2} presents the DD/TID ratios derived from the dosimetry data for each of the two irradiation weeks, W15 and W16. The ratio remains consistent across both weeks, with a variation of less than \SI{4}{\percent}, confirming the stability of the radiation field composition at the test position throughout the campaign.
 
-The interrupt itself is not generated directly by the 48~MHz clock. Instead, TC4 counts timer ticks derived from this clock. After division by the generic clock generator and the TC4 prescaler, the timer counter reaches its configured overflow or compare-match condition. At that point, the corresponding interrupt flag is set and the interrupt request is forwarded to the NVIC. Consequently, if the DFLL48M-derived clock becomes slightly faster, TC4 reaches the interrupt condition sooner and the measured interrupt period becomes shorter.
+\begin{table}[H]
+    \centering
+    \arrayrulecolor{thesisblue}
+    \renewcommand{\arraystretch}{1.25}
+    \setlength{\tabcolsep}{8pt}
+    \begin{tabular}{
+        >{\centering\arraybackslash}m{1.3cm}
+        >{\centering\arraybackslash}m{1.8cm}
+        >{\centering\arraybackslash}m{4.6cm}
+        >{\centering\arraybackslash}m{5.8cm}
+    }
+        \rowcolor{thesisblue}
+        \textcolor{white}{\textbf{Run}} &
+        \textcolor{white}{\textbf{TID (Gy)}} &
+        \textcolor{white}{\textbf{DDEF (1-MeV $n_\text{eq}$ cm$^{-2}$)}} &
+        \textcolor{white}{\textbf{DD/TID (1-MeV $n_\text{eq}$ cm$^{-2}$ Gy$^{-1}$)}} \\
+        \hline
+        \rowcolor{thesislightgray}
+        W15 &
+        \SI{145.6}{} &
+        \SI{2.07e12}{} &
+        \SI{1.42e10}{} \\
+        W16 &
+        \SI{129.2}{} &
+        \SI{1.78e12}{} &
+        \SI{1.37e10}{} \\
+        \hline
+    \end{tabular}
+    \caption{DD to TID ratio per weekly run, throughout the second CHARM campaign. The consistency between weeks confirms the stability of the radiation field composition at the test position.}
+    \label{tab:dd-tid-ratio-charm-2}
+    \arrayrulecolor{black}
+\end{table}
 
-This means that the observed period reduction is most likely related to drift in the DFLL48M-derived timer clock path, rather than to the 32.768~kHz oscillator directly. Although the internal 32.768~kHz oscillator is enabled in the clock configuration, it is assigned to generic clock generator~1 and is not the generator used by TC4. In addition, the DFLL is enabled without closed-loop correction in this configuration, meaning that its output frequency depends on the programmed coarse and fine calibration values. This makes the open-loop DFLL48M clock a plausible source of the measured timing drift.
+\subsection{Conclusions of CHARM Tests}
+\label{subsection:charm-conclusions}
 
-The measured decrease of approximately 1.6\% in the interrupt period corresponds to an approximately 1.6\% increase in the effective timer clock frequency. In this test, the drift remained small and did not appear to compromise the operation of the system. However, since the firmware architecture is event-driven, excessive clock drift could eventually affect the timing of scheduled rotor-position updates and could lead to loss of synchronization or controllability. Future irradiation tests should therefore monitor the stability of the individual clock sources and derived clocks separately, especially the DFLL48M output, the generic clock supplied to TC4, and the low-frequency reference clocks.
+The first test, while inconclusive with respect to TID and displacement damage degradation due to mechanical failure, established a baseline SEE cross-section for the system operating without fault mitigation. The second test reached end of life with the L6498D gate drivers confirmed as the failing components, consistent across both the CHARM and $^{60}$Co campaigns.
+
+From an SEE perspective, the MCU SEFI cross-sections of the two tests are in close agreement, as expected for a process governed by the device's intrinsic sensitivity rather than the firmware. Specifically, the observed $\sigma_\text{SEFI}$ of Campaign~2 falls within the 95\% confidence level upper limit of Campaign~1, and vice versa, indicating that the two estimates are statistically compatible and consistent with a single underlying MCU cross-section. In contrast, the Control Corruption cross-section is notably lower in the second test, where the software TMR fault mitigation technique was active. This reduction demonstrates that the implemented mitigation is effective in preventing radiation-induced errors from propagating into loss of motor controllability.
+
+Figure~\ref{fig:charm-cross-sections} provides a visual comparison of the cross-sections across both campaigns, including the 95\% confidence level Poisson upper limits.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth,keepaspectratio]{06_RadiationTestsResults/charm-plots/cross_sections_charm.pdf}
+    \caption{Comparison of the SEE cross-sections between the two CHARM irradiation campaigns. The MCU SEFI cross-sections are statistically compatible, while the Control Corruption cross-section is noticeably reduced in the second campaign where software fault mitigation was active.}
+    \label{fig:charm-cross-sections}
+\end{figure}
+
+\section{Chapter Summary and Discussion}
+\label{section:rad-tests-discussion}
+
+Across all irradiation campaigns, neither the $^{60}$Co nor the CHARM tests revealed any measurable degradation in positioning repeatability attributable to radiation effects. The system's performance limitations throughout all tests were consistently traceable to mechanical factors --- primarily the encoder--magnet misalignment introduced by a manufacturing tolerance error in the test bench --- and to the suboptimal tuning of the FOC PI controllers, rather than to TID or displacement damage.
+
+The gate drivers emerged as the critical limiting components in both radiation environments. The NCP5183 gate drivers demonstrated significantly superior TID tolerance compared to the L6498D under pure $^{60}$Co irradiation, comfortably exceeding the thesis TID target. Under the mixed-field environment at CHARM, the L6498D gate drivers failed at a TID significantly lower than that observed under pure $^{60}$Co irradiation. This reduction strongly suggests a synergistic contribution of displacement damage to the degradation of the L6498D. As explicitly stated in its datasheet, the L6498D relies on bipolar technology in its internal stages, which is known to be sensitive to displacement damage effects. The NCP5183, by contrast, does not reference bipolar technology in its datasheet, and its significantly superior TID tolerance under $^{60}$Co irradiation suggests a more radiation-hard internal architecture.
+
+The DD/TID ratio measured at the CHARM test position was consistent across both irradiation weeks, confirming the stability of the mixed-field composition at the test position throughout the campaign. Given that the NCP5183 exceeded the TID target with a considerable margin under pure TID conditions, it is reasonable to expect that even with the additional degradation contribution from displacement damage in a mixed-field environment, the system would remain operational beyond the target. The evaluation of the NCP5183 under mixed-field irradiation conditions is, therefore, the natural next step toward a full radiation qualification of the system.

@@ -1,22 +1,59 @@
-% ============================================================
-% thesis.sty
-% Clean thesis style file
-% Compile with XeLaTeX
-% ============================================================
+\ProvidesPackage{thesis}[ggkogkou Thesis package]
 
-\ProvidesPackage{thesis}[2026/05/16 Clean thesis package]
-
-% ------------------------------------------------------------
-% Language and fonts
-% ------------------------------------------------------------
+% Core Language & Fonts
 \RequirePackage{fontspec}
 \RequirePackage{polyglossia}
 
-\RequirePackage{tikz}
-\RequirePackage{amsmath}
+% Layout & Formatting
+\RequirePackage{geometry}
+\RequirePackage{placeins}
+\RequirePackage{setspace}
 
+% Math, Science & Graphics
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\RequirePackage{siunitx}
+\RequirePackage{tikz}
+\RequirePackage{pgf}
+\RequirePackage{graphicx}
+\RequirePackage{float}
+\RequirePackage{caption}
+\RequirePackage{subcaption}
+\RequirePackage{wrapfig}
+\RequirePackage{svg}
+
+% Tables
+\RequirePackage{booktabs}
+\RequirePackage{longtable}
+\RequirePackage{array}
+\RequirePackage{tabularx}
+\RequirePackage{xltabular}
+\RequirePackage{colortbl}
+\RequirePackage{enumitem}
+\RequirePackage{makecell}
+\RequirePackage{multirow}
+
+% Header, Footer & Footnotes
+\RequirePackage{fancyhdr}
 \RequirePackage[bottom]{footmisc}
 
+% Miscellaneous (Acronyms & Code)
+\RequirePackage[printonlyused]{acronym}
+\RequirePackage{xcolor}
+\RequirePackage{listings}
+
+% Hyperlinks & URLs (Must be loaded last)
+\RequirePackage[bookmarks=true]{hyperref}
+\RequirePackage{xurl}
+
+
+% ============================================================
+% CONFIGURATIONS & SETTINGS
+% ============================================================
+
+% ------------------------------------------------------------
+% Language and fonts configuration
+% ------------------------------------------------------------
 \setmainlanguage{english}
 \setotherlanguage{greek}
 
@@ -36,11 +73,8 @@
 ]
 
 % ------------------------------------------------------------
-% Page layout
+% Page layout configuration
 % ------------------------------------------------------------
-\RequirePackage{geometry}
-\RequirePackage{placeins}
-
 \geometry{
     a4paper,
     top=2.2cm,
@@ -53,8 +87,6 @@
 % ------------------------------------------------------------
 % Line spacing
 % ------------------------------------------------------------
-\RequirePackage{setspace}
-
 \setstretch{1.25}
 \frenchspacing
 
@@ -65,15 +97,8 @@
 \setlength{\parskip}{0.6em}
 
 % ------------------------------------------------------------
-% Figures and captions
+% Figures and captions configuration
 % ------------------------------------------------------------
-\RequirePackage{graphicx}
-\RequirePackage{float}
-\RequirePackage{caption}
-\RequirePackage{subcaption}
-\RequirePackage{wrapfig}
-\RequirePackage{svg}
-
 \graphicspath{{figures/}{Figures/}{images/}{Images/}{logos/}{./}}
 
 \captionsetup{
@@ -83,34 +108,14 @@
 }
 
 % ------------------------------------------------------------
-% Tables
+% Math and units configuration
 % ------------------------------------------------------------
-\RequirePackage{booktabs}
-\RequirePackage{longtable}
-\RequirePackage{array}
-\RequirePackage{tabularx}
-\RequirePackage{xltabular}
-\RequirePackage{colortbl}
-\RequirePackage{enumitem}
+\providecommand{\mathdefault}[1]{#1}
 
 % ------------------------------------------------------------
-% Math and units
+% Colors (must match thesis_plot_style.py hex values exactly)
 % ------------------------------------------------------------
-\RequirePackage{amsmath}
-\RequirePackage{amssymb}
-\RequirePackage{siunitx}
-
-% ------------------------------------------------------------
-% Acronyms
-% ------------------------------------------------------------
-\RequirePackage[printonlyused]{acronym}
-
-% ------------------------------------------------------------
-% Colors  (must match thesis_plot_style.py hex values exactly)
-% ------------------------------------------------------------
-\RequirePackage{xcolor}
-
-%  Primary palette  -- used in both plots and document typography
+% Primary palette -- used in both plots and document typography
 \definecolor{thesisblue}  {HTML}{1A5376}   % BLUE   -- accent, resolver, links
 \definecolor{thesisred}   {HTML}{C44E52}   % RED    -- encoder, outliers
 \definecolor{thesisgreen} {HTML}{55A868}   % GREEN  -- angle state 3
@@ -118,15 +123,13 @@
 \definecolor{thesisgold}  {HTML}{CCB974}   % GOLD   -- state 5 / spare
 \definecolor{thesisteal}  {HTML}{64B5CD}   % TEAL   -- state 6 / spare
 
-%  Background / neutral tones
+% Background / neutral tones
 \definecolor{thesislightblue}{HTML}{DCEEFA}   % shading bands in figures
 \definecolor{thesislightgray}{HTML}{F5F5F5}   % table row fills
 
 % ------------------------------------------------------------
-% Code listings
+% Code listings configuration
 % ------------------------------------------------------------
-\RequirePackage{listings}
-
 \lstset{
     basicstyle=\footnotesize\ttfamily,
     numbers=left,
@@ -143,14 +146,12 @@
 % ------------------------------------------------------------
 % Contents depth
 % ------------------------------------------------------------
-\setcounter{tocdepth}{3}
+\setcounter{tocdepth}{2}
 \setcounter{secnumdepth}{3}
 
 % ------------------------------------------------------------
-% Headers and footers
+% Headers and footers configuration
 % ------------------------------------------------------------
-\RequirePackage{fancyhdr}
-
 \pagestyle{fancy}
 \fancyhf{}
 
@@ -167,11 +168,8 @@
 }
 
 % ------------------------------------------------------------
-% Hyperlinks
-% Load hyperref near the end
+% Hyperlinks configuration
 % ------------------------------------------------------------
-\RequirePackage[bookmarks=true]{hyperref}
-
 \hypersetup{
     colorlinks=true,
     linkcolor=thesisblue,
@@ -185,11 +183,6 @@
     pdfauthor={Georgios Gkogkou},
     pdfkeywords={CERN, radiation effects, radiation qualification}
 }
-
-% ------------------------------------------------------------
-% Better URL breaking
-% ------------------------------------------------------------
-\RequirePackage{xurl}
 
 % ------------------------------------------------------------
 % End of thesis.sty
