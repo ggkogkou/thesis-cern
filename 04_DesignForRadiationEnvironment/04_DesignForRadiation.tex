@@ -523,26 +523,6 @@ The described implementation constitutes the inner current control loops running
 
 For the communication with the SPI interface of the AS5047P magnetic encoder, a device driver was implemented in C++. Such an approach was followed in order to isolate the AS5047P logic, calculations and error handling from the HAL and enhance maintainability and portability. The sensor itself offer many protocols for reading the angle (PWM, UVW, SPI) and can only be configured through SPI. Furthermore, the driver is implemented in non-blocking/interrupt mode and not blocking, thus there are callbacks functions defined in order to be passed to the SPI Read interrupt handler.
 
-\subsection{Compiler Options}
-
-Finally, one of the most important optimizations that were applied to the software are the compiler optimizations that vastly improved the systems' performance and made the control feasible. Below, a comparison of the executable image size is showcased. Some more compiler options that helped the system were fnolto fnoexceptions fnortti.
-
-\begin{table}[ht]
-    \centering
-    \begin{tabular}{lrrrr}
-        \toprule
-        \textbf{Optimization flag} & \textbf{.text (B)} & \textbf{.data (B)} & \textbf{.bss (B)} & \textbf{Total ROM (B)} \\
-        \midrule
-        \texttt{-O1}          & -- & -- & -- & -- \\
-        \texttt{-Os}          & -- & -- & -- & -- \\
-        \texttt{-O3}          & -- & -- & -- & -- \\
-        \texttt{-O3 -flto}    & -- & -- & -- & -- \\
-        \bottomrule
-    \end{tabular}
-    \caption{ELF executable size comparison when using different compiler options}
-    \label{tab:executables-comparison}
-\end{table}
-
 \subsection{Compile-Time Computations \& Startup Calibration}
 
 One of the main reasons that C++ was preferred is for its ability to perform calculations at compile time with constexpr and consteval. This is particularly useful in FOC as it contains calculations that are necessary to happen at compile time. For specifically, at the beginning of the software, there is an initialization and calibration routine that has to run. This includes the calculation of the trigonometric LUTs and their storage into flash memory and the alogirithmic zero offset electrical angle calculation and the direction calibration. Those are described in chapter \ref{chapter:motor-control-selection} as well.
@@ -570,27 +550,28 @@ Although TMR is most effective when implemented in hardware (e.g.\ in FPGAs, whe
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.7\textwidth,keepaspectratio]{04_DesignForRadiationEnvironment/images/N-version.pdf}
+  \includegraphics[width=0.8\textwidth,keepaspectratio]{04_DesignForRadiationEnvironment/images/N-version.pdf}
   \caption{N-version programming software reliability technique.}
   \label{fig:N-version-programming}
 \end{figure}
 
 Since the MCU does not support multi-threading and an RTOS would impose prohibitive performance overhead, the adopted technique is a software TMR that stores critical runtime variables in three separate RAM regions. These include algorithm parameters such as the zero-offset electrical angle and the direction variable, as well as state machine state variables. A key requirement is that the three copies are placed sufficiently far apart in memory so that a single SEU-affected memory block does not corrupt adjacent copies. This is achieved through the linker script and startup code, where three dedicated memory sections are declared with a guaranteed separation of 4096 bytes. The resulting RAM layout is illustrated in Figure~\ref{fig:samd21-ram-layout}.
 
+The stack is placed at the beginning of the memory region so that a stack overflow triggers a hard-fault handler callback, allowing the event to be detected and logged rather than causing silent corruption.
+
+Instead of reading a single instance of a critical variable, three copies are read and a majority voter is applied to determine the valid value. This inevitably increases code size, so the number of variables designated as critical must be kept reasonable. The process is illustrated in Figure~\ref{fig:tmr-voter}. Additionally, the breadcrumb technique is employed to store diagnostic information in non-volatile memory, enabling post-reset analysis of the fault that caused the MCU to reset.
+
+
 \begin{figure}[H]
   \centering
   \includegraphics[
-    width=\textwidth,
+    width=0.8\textwidth,
     height=\textheight,
     keepaspectratio
   ]{04_DesignForRadiationEnvironment/images/SAMD21_RAM.pdf}
   \caption{Configured SRAM layout of the SAMD21 MCU}
   \label{fig:samd21-ram-layout}
 \end{figure}
-
-The stack is placed at the beginning of the memory region so that a stack overflow triggers a hard-fault handler callback, allowing the event to be detected and logged rather than causing silent corruption.
-
-Instead of reading a single instance of a critical variable, three copies are read and a majority voter is applied to determine the valid value. This inevitably increases code size, so the number of variables designated as critical must be kept reasonable. The process is illustrated in Figure~\ref{fig:tmr-voter}. Additionally, the breadcrumb technique is employed to store diagnostic information in non-volatile memory, enabling post-reset analysis of the fault that caused the MCU to reset.
 
 \begin{figure}[H]
   \centering
@@ -600,9 +581,5 @@ Instead of reading a single instance of a critical variable, three copies are re
     keepaspectratio
   ]{04_DesignForRadiationEnvironment/images/SAMD21_RAM_TMR.pdf}
   \caption{Reading three copies of a variable and performing TMR}
-  \label{fig:samd21-ram-layout}
+  \label{fig:tmr-voter}
 \end{figure}
-
-There are several ways for the MCU to be reset. Fortunately, there is a register from which we can understand what kind of reset happened. The most sneaky case is the case of the software reset (writing to the specific bit that resets the CPU) which is a case that many might have gone wrong. The SAMD21 \texttt{RCAUSE} register is a read-only register located at offset \texttt{0x38}. It records the source of the most recent device reset. The individual flags are summarized in Table~\ref{tab:samd21_rcause}.
-
-TODO: Continue from here.

@@ -19,7 +19,7 @@ The system was irradiated up to \SI{500}{Gy} and showcased two distinct failure 
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.8\textwidth,keepaspectratio]{06_RadiationTestsResults/images/System-Revised-CC60.JPG}
+  \includegraphics[width=0.7\textwidth,keepaspectratio]{06_RadiationTestsResults/images/System-Revised-CC60.JPG}
   \caption{The test setup mounted on the moving table of CC60 facility, with the metallic structure facing outwards to avoid accidental shielding of one fraction of the DUT.}
   \label{fig:cc60-revised}
 \end{figure}
@@ -182,9 +182,16 @@ Finally, Target Position 4 maintains an average settled angle of \SI{276.3681}{\
 
 Figure~\ref{fig:ncp5183-3s} illustrates the local $3\sigma$ repeatability for each target position along with the pooled system baseline across the cumulative total ionizing dose. The pooled $3\sigma$ (solid red line) remains flat, fluctuating slightly between \SI{0.33}{\degree} and \SI{0.39}{\degree}. Neither increasing nor decreasing trend is visible in any of the positions up to the final TID window at \SI{626.3}{\gray}. Target Position 2 consistently tracks at the highest dispersion, peaking at \SI{0.4738}{\degree}, while Target Position 3 maintains the lowest dispersion, as low as \SI{0.2630}{\degree}.
 
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/images-ncp5183/three_sigma.pdf}
+%     \caption{Local $3\sigma$ positioning repeatability and pooled system baseline as a function of cumulative total ionizing dose.}
+%     \label{fig:ncp5183-3s}
+% \end{figure}
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth,keepaspectratio]{06_RadiationTestsResults/images-ncp5183/three_sigma.pdf}
+    \input{06_RadiationTestsResults/images-ncp5183/three_sigma.pgf}
     \caption{Local $3\sigma$ positioning repeatability and pooled system baseline as a function of cumulative total ionizing dose.}
     \label{fig:ncp5183-3s}
 \end{figure}
@@ -353,13 +360,13 @@ Table~\ref{tab:dd-tid-ratio-charm-2} presents the DD/TID ratios derived from the
 
 The first test, while inconclusive with respect to TID and displacement damage degradation due to mechanical failure, established a baseline SEE cross-section for the system operating without fault mitigation. The second test reached end of life with the L6498D gate drivers confirmed as the failing components, consistent across both the CHARM and $^{60}$Co campaigns.
 
-From an SEE perspective, the MCU SEFI cross-sections of the two tests are in close agreement, as expected for a process governed by the device's intrinsic sensitivity rather than the firmware. Specifically, the observed $\sigma_\text{SEFI}$ of Campaign~2 falls within the 95\% confidence level upper limit of Campaign~1, and vice versa, indicating that the two estimates are statistically compatible and consistent with a single underlying MCU cross-section. In contrast, the Control Corruption cross-section is notably lower in the second test, where the software TMR fault mitigation technique was active. This reduction demonstrates that the implemented mitigation is effective in preventing radiation-induced errors from propagating into loss of motor controllability.
+From an SEE perspective, the MCU SEFI cross-sections of the two tests are in close agreement, as expected for a process governed by the device's intrinsic sensitivity rather than the firmware. Specifically, the observed $\sigma_\text{SEFI}$ of Campaign~2 falls within the 95\% confidence level upper limit of Campaign~1, and vice versa, indicating that the two estimates are statistically compatible and consistent with a single underlying MCU cross-section. The Control Corruption cross-section was approximately 47\% lower in the second test, where the software TMR fault mitigation technique was active; however, the 95\% Poisson confidence intervals of the two campaigns overlap, so this difference does not reach statistical significance given the limited number of observed events ($N=21$ and $N=11$, respectively). The effectiveness of the implemented TMR mitigation in preventing radiation-induced errors from propagating into loss of motor controllability therefore remains inconclusive on the basis of the present dataset, and the measured cross-sections should instead be regarded as preliminary reference values for future, higher-statistics mitigation studies.
 
 Figure~\ref{fig:charm-cross-sections} provides a visual comparison of the cross-sections across both campaigns, including the 95\% confidence level Poisson upper limits.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth,keepaspectratio]{06_RadiationTestsResults/charm-plots/cross_sections_charm.pdf}
+    \input{06_RadiationTestsResults/charm-plots/cross_sections_charm_log.pgf}
     \caption{Comparison of the SEE cross-sections between the two CHARM irradiation campaigns. The MCU SEFI cross-sections are statistically compatible, while the Control Corruption cross-section is noticeably reduced in the second campaign where software fault mitigation was active.}
     \label{fig:charm-cross-sections}
 \end{figure}
