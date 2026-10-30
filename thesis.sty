@@ -58,8 +58,15 @@
 \setotherlanguage{greek}
 
 % Academic font with good English and Greek support
-\setmainfont{Linux Libertine O}
-\newfontfamily\greekfont[Script=Greek]{Linux Libertine O}
+\setmainfont{LinLibertine_R.otf}[
+    Script=Latin,
+    BoldFont={LinLibertine_RZ.otf},
+    BoldItalicFont={LinLibertine_RZI.otf}
+]
+
+\newfontfamily\greekfont[Script=Greek]{Linux Libertine O}[
+    BoldFont={LinLibertine_RZ.otf}
+]
 
 % Cover-only font, used for the title pages
 \newfontfamily\coverfont{EB Garamond}[
@@ -67,7 +74,7 @@
     SmallCapsFeatures={Letters=SmallCaps}
 ]
 
-\newfontfamily\covergreekfont[Script=Greek]{EB Garamond}[
+\newfontfamily\covergreekfont{EB Garamond}[
     Ligatures=TeX,
     SmallCapsFeatures={Letters=SmallCaps}
 ]
